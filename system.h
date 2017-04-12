@@ -4,8 +4,8 @@
 #define NFD           16	//
 #define NPROC          4	//number of processes able to run
 
-#define MAXLINE      128        //max length of line
-#define MAXCMD        64        //max length of command
+#define MAXLINE      128	//max length of line
+#define MAXCMD        64	//max length of command
 #define MAXPATH      128	//max length of a path name
 #define MAXNAME	      64	//max length of a name
 #define NNAME         32	//maximum number of names to a paths
@@ -43,42 +43,43 @@ typedef struct proc{
 	OFT         *fd[NFD];
 }PROC;
 
-MINODE minode[NMINODE];		//array of minodes
+MINODE minode[NMINODE];	//array of minodes
 MINODE *root;			//pointer to the root minode
 PROC   proc[NPROC];		//array of process
 PROC *running;			//pointer to the running process
 
 char buf[BLKSIZE];		//global buffer used to blocks from the device
 
-SUPER *sp;			//super block pointer
-GD    *gp;			//group descriptor pointer
-INODE *ip;			//inode pointer
-DIR   *dp;			//directory pointer
+SUPER *sp;				//super block pointer
+GD    *gp;				//group descriptor pointer
+INODE *ip;				//inode pointer
+DIR   *dp;				//directory pointer
 
-int dev;			//file descriptor of device
+int dev;				//file descriptor of device
 int nblocks;			//number of blocks on device
 int ninodes;			//number of inodes on device
-int bmap;			//block bitmap block number
-int imap;			//inode bitmap block number
-int iblock;			//beginning inode block number
-int inodes_per_block;		//inodes per block
-				//NOTE: Calculated in super_block()
+int bmap;				//block bitmap block number
+int imap;				//inode bitmap block number
+int iblock;				//beginning inode block number
+int inodes_per_block;	//inodes per block
+						//NOTE: Calculated in super_block()
 
-char *disk = "mydisk";		//default device name to read/write
+char *disk = "mydisk";	//default device name to read/write
 
-char line[MAXLINE];		//line entered by user
-char cmd[MAXCMD];		//command parsed from line
+char line[MAXLINE];			//line entered by user
+char cmd[MAXCMD];			//command parsed from line
 char pathname[MAXPATH];		//path name parsed from line
 char names[NNAME][MAXNAME];	//tokenized names within pathname
 char directory[MAXPATH];	//directory name of path
-char base[MAXPATH];		//base name of path
+char base[MAXPATH];			//base name of path
 
-int icmd;			//index of command in command name array
+int icmd;					//index of command in command name array
 char *cmds[] = {"ls",		//array of command names
 		"lsdir",
 		"cd",
 		"pwd",
 		"mkdir",
 		"creat",
+		"rmdir", 
 		"quit",
 		NULL};

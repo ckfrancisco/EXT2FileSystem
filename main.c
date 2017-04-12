@@ -42,10 +42,10 @@ int find_cmd(char *cmd)
 			return i;
 	}
 
-	return -1;				//return false if command never found
+	return -1;						//return false if command never found
 }
 
-int main(int argc, char *argv[ ])   // run as a.out [diskname]
+int main(int argc, char *argv[ ])	// run as a.out [diskname]
 {
 	int i;
 
@@ -106,7 +106,7 @@ int main(int argc, char *argv[ ])   // run as a.out [diskname]
 				creat_file(pathname);
 				break;
 			case 6:
-				rm_dir(pathname);
+				//rm_dir(pathname);
 				break;
 			case 7:
 				exit(1);

@@ -47,38 +47,38 @@ MINODE *iget(int dev, int ino)
 	{
 		mip = &minode[i];
 
-		if(mip->dev == dev && mip->ino == ino)			//if found increment reference count and return *mip
+		if(mip->dev == dev && mip->ino == ino)		//if found increment reference count and return *mip
 		{
 			mip->refCount++;
-       			return mip;
+			return mip;
 		}
 	}
-									//if not found allocate new minode to the first free space
+													//if not found allocate new minode to the first free space
 	for(i = 0; i < NMINODE; i++)					//iterate through minodes to find free space
 	{
 		mip = &minode[i];
 
-		if(mip->refCount == 0)					//if space found assign minode values and return *mip
+		if(mip->refCount == 0)						//if space found assign minode values and return *mip
 		{
-			mip->refCount = 1;				//assign minode values
+			mip->refCount = 1;						//assign minode values
 			mip->dev = dev;
 			mip->ino = ino;
 			mip->dirty = mip->mounted = mip->mptr = 0;
 
-			blk  = (ino-1)/8 + iblock;			//calculate block and offset values
-			disp = (ino-1) % 8;				//NOTE: a set of inodes are stored in a blk
-									//	use disp to determine offset of ino
-									//	within blk
+			blk  = (ino-1)/8 + iblock;				//calculate block and offset values
+			disp = (ino-1) % 8;						//NOTE: a set of inodes are stored in a blk
+													//	use disp to determine offset of ino
+													//	within blk
 
-			get_block(dev, blk, buf);			//find inode with blk and disp
-			(mip->inode) = *((INODE *)buf + disp);		//assign inode to minode
+			get_block(dev, blk, buf);				//find inode with blk and disp
+			(mip->inode) = *((INODE *)buf + disp);	//assign inode to minode
 
-			return mip;					//return minode
+			return mip;								//return minode
 		}
 	}
 
-  	printf("ERROR: No free space to allocate new minode\n");	//no space found display error and return null
-  	return 0;
+	printf("ERROR: No free space to allocate new minode\n");	//no space found display error and return null
+	return 0;
 }
 
 //description: write inode from minode to device
@@ -96,14 +96,14 @@ int iput(MINODE *mip)
 	if(mip->refCount > 0) return;	//if minode is being referenced or used return
 	if(!mip->dirty) return;
 
-	blk  = (ino-1)/8 + iblock;	//calculate block and offset values
-	disp = (ino-1) % 8;		//NOTE: a set of inodes are stored in a blk
-					//	use disp to determine offset of ino
-					//	within blk
+	blk  = (mip->ino-1)/8 + iblock;	//calculate block and offset values
+	disp = (mip->ino-1) % 8;		//NOTE: a set of inodes are stored in a blk
+									//	use disp to determine offset of ino
+									//	within blk
 
 	get_block(mip->dev, blk, buf);	//copy inode into inode pointer within buffer
 	ip = (INODE *)buf + disp;
-     	*ip = mip->inode;
+	*ip = mip->inode;
 
 	put_block(mip->dev, blk, buf);	//write back to deivde
 }
@@ -118,29 +118,29 @@ int search(MINODE *mip, char *name)
 	DIR *dp;
 	char *cp;
 
-	for(dblk = 0; dblk < 12; dblk++)				//execute across all direct blocks within inode's inode table
+	for(dblk = 0; dblk < 12; dblk++)						//execute across all direct blocks within inode's inode table
 	{
-		if(!(mip->inode.i_block[dblk]))				//return fail if empty block found
+		if(!(mip->inode.i_block[dblk]))						//return fail if empty block found
 			return -1;
 
 		get_block(mip->dev, mip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
-		dp = (DIR*)buf;						//cast buffer as directory pointer
-		cp = buf;						//cast buffer as "byte" pointer
+		dp = (DIR*)buf;										//cast buffer as directory pointer
+		cp = buf;											//cast buffer as "byte" pointer
 
 
 
-		while(cp < &buf[BLKSIZE])				//execute while there is another directory struct ahead
+		while(cp < &buf[BLKSIZE])							//execute while there is another directory struct ahead
 		{
-			if(!strncmp(dp->name, name, dp->name_len)	//check if directory name matches name
-				&& strlen(name) == dp->name_len)	//prevents . == ..
-				return dp->inode;			//return inode number if found
+			if(!strncmp(dp->name, name, dp->name_len)		//check if directory name matches name
+				&& strlen(name) == dp->name_len)			//prevents . == ..
+				return dp->inode;							//return inode number if found
 
-			cp += dp->rec_len;				//set variables to the next directory struct
+			cp += dp->rec_len;								//set variables to the next directory struct
 			dp = (DIR*)cp;
 		}
 	}
 
-	return -1;							//return fail if name not found
+	return -1;												//return fail if name not found
 }
 
 //description: determine the inode number of a path on the deive
@@ -151,29 +151,30 @@ int getino(int *dev, char *path)
 	int i;
 	int n;
 	int ino;
-        MINODE *mip;
+	MINODE *mip;
 
-	if (path[0] == '/')						//if absolute path set current minode to root inode
+	if (path[0] == '/')										//if absolute path set current minode to root inode
 		mip = iget(*dev, 2);
-        else
+	else
 		mip = iget((running->cwd->dev), running->cwd->ino);	//else set current minode to cwd inode
 
-	n = tokenize(path);						//n = number of token strings
+	n = tokenize(path);										//n = number of token strings
 
-        for (i = 0; i < n; i++)						//iterate through path tokens
+	for (i = 0; i < n; i++)									//iterate through path tokens
 	{
 		ino = search(mip, names[i]);
 
-		if(ino < 0)						//search for path token inode number
+		if(ino < 0)											//search for path token inode number
 		{
 			printf("\nERROR: %s not found\n", names[i]);	//name not found display error and return fail
 			return -1;
 		}
 
-		iput(mip);						//put back current minode and get the next
+		iput(mip);											//put back current minode and get the next
 		mip = iget(*dev, ino);
-         }
-         return mip->ino;						//return inode number of minode
+	}
+
+	return mip->ino;										//return inode number of minode
 }
 
 //description: determine name of minode using the parent minode
@@ -186,31 +187,31 @@ int get_name(MINODE *pmip, MINODE *mip, char *name)
 	DIR *dp;
 	char *cp;
 
-	if(mip->ino == 2)						//if mip is root copy "/" to avoid "." cases
+	if(mip->ino == 2)											//if mip is root copy "/" to avoid "." cases
 	{
 		strcpy(name, "/");
 		return;
 	}
 
-	for(dblk = 0; dblk < 12; dblk++)				//execute across all direct blocks within inode's inode table
+	for(dblk = 0; dblk < 12; dblk++)							//execute across all direct blocks within inode's inode table
 	{
-		if(!(mip->inode.i_block[dblk]))				//return fail if empty block found
+		if(!(mip->inode.i_block[dblk]))							//return fail if empty block found
 			return -1;
 
 		get_block(pmip->dev, pmip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
-		dp = (DIR*)buf;						//cast buffer as directory pointer
-		cp = buf;						//cast buffer as "byte" pointer
+		dp = (DIR*)buf;											//cast buffer as directory pointer
+		cp = buf;												//cast buffer as "byte" pointer
 
-		while(cp < &buf[BLKSIZE])				//execute while there is another directory struct ahead
+		while(cp < &buf[BLKSIZE])								//execute while there is another directory struct ahead
 		{
-			if(dp->inode == mip->ino)			//if inode found copy name into name and return
+			if(dp->inode == mip->ino)							//if inode found copy name into name and return
 			{
 				strncpy(name, dp->name, dp->name_len);
 				name[dp->name_len] = 0;
 				return;
 			}
 
-			cp += dp->rec_len;				//set variables to the next directory struct
+			cp += dp->rec_len;									//set variables to the next directory struct
 			dp = (DIR*)cp;
 		}
 	}
@@ -228,12 +229,12 @@ MINODE *iget_parent(MINODE *mip)
 
 	get_block(mip->dev, mip->inode.i_block[0], buf);	//read a directory block from the inode table into buffer
 
-	dp = (DIR*)buf;						//cast buffer as directory pointer
-	cp = buf;						//cast buffer as "byte" pointer
-	cp += dp->rec_len;					//iterate to ".." directory
+	dp = (DIR*)buf;										//cast buffer as directory pointer
+	cp = buf;											//cast buffer as "byte" pointer
+	cp += dp->rec_len;									//iterate to ".." directory
 	dp = (DIR*)cp;
 
-	pmip = iget(mip->dev, dp->inode);			//get parent minode
+	pmip = iget(mip->dev, dp->inode);					//get parent minode
 
-	return pmip;						//return parent minode
+	return pmip;										//return parent minode
 }

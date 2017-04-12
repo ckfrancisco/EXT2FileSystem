@@ -115,14 +115,14 @@ int ialloc(int dev)
 
 	get_block(dev, imap, buf);			//read imap to buffer
 
-	for (i=0; i < ninodes; i++){			//set first 0 bit
+	for (i=0; i < ninodes; i++){		//set first 0 bit
 		if (tst_bit(buf, i)==0){
 			set_bit(buf,i);
 			dec_free_inodes(dev);		//decrement amount of free inodes
 
 			put_block(dev, imap, buf);	//write back to device
 
-			return i+1;			//return index of inode bit allocated
+			return i+1;					//return index of inode bit allocated
 		}
 	}
 	printf("ialloc(): no more free inodes\n");	//if no available inodes display error and return fail
@@ -139,16 +139,17 @@ int balloc(int dev)
 
 	get_block(dev, bmap, buf);			//read bmap into buffer
 
-	for (i=0; i < nblocks; i++){			//set first 0 bit
+	for (i=0; i < nblocks; i++){		//set first 0 bit
 		if (tst_bit(buf, i)==0){
 			set_bit(buf,i);
 			dec_free_blocks(dev);		//decrement amount of free blocks
 
 			put_block(dev, bmap, buf);	//write back to device
 
-			return i+1;			//return index of block bit allocated
+			return i+1;					//return index of block bit allocated
 		}
 	}
+
 	printf("balloc(): no more free blocks\n");	//if no available blocks display error and return fail
 	return -1;
 }
@@ -160,12 +161,13 @@ int idealloc(int dev, int ino)
 {
 	char buf[BLKSIZE];
 
-	get_block(dev, imap, buf);			//read imap into buffer
+	get_block(dev, imap, buf);		//read imap into buffer
 
 	clr_bit(buf,ino);				//clear ino bit
-	inc_free_inodes(dev);				//increment amount of free inode
+	inc_free_inodes(dev);			//increment amount of free inode
 
-	put_block(dev, imap, buf);			//write back to device
+	put_block(dev, imap, buf);		//write back to device
+
 	return 0;
 }
 
@@ -176,11 +178,12 @@ int bdealloc(int dev, int bno)
 {
 	char buf[BLKSIZE];
 
-	get_block(dev, bmap, buf);			//read bmap into buffer
+	get_block(dev, bmap, buf);		//read bmap into buffer
 
 	clr_bit(buf,bno);				//clear bno bit
-	inc_free_blocks(dev);				//increment amount of free block
+	inc_free_blocks(dev);			//increment amount of free block
 
-	put_block(dev, bmap, buf);			//write back to device
+	put_block(dev, bmap, buf);		//write back to device
+
 	return 0;
 }
