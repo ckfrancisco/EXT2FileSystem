@@ -101,14 +101,14 @@ int iput(MINODE *mip)
 									//	use disp to determine offset of ino
 									//	within blk
 
-	get_block(mip->dev, blk, buf);	//copy inode into inode pointer within buffer
+	get_block(mip->dev, blk, buf);	//copy minode into inode pointer within buffer
 	ip = (INODE *)buf + disp;
 	*ip = mip->inode;
 
 	put_block(mip->dev, blk, buf);	//write back to deivde
 }
 
-//description: determine the inode number of a name within an inodes directories
+//description: determine the inode number of a name within an inode's directories
 //parameter: minode and name
 //return: inode number of name
 int search(MINODE *mip, char *name)
@@ -126,8 +126,6 @@ int search(MINODE *mip, char *name)
 		get_block(mip->dev, mip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
 		dp = (DIR*)buf;										//cast buffer as directory pointer
 		cp = buf;											//cast buffer as "byte" pointer
-
-
 
 		while(cp < &buf[BLKSIZE])							//execute while there is another directory struct ahead
 		{
@@ -162,11 +160,11 @@ int getino(int *dev, char *path)
 
 	for (i = 0; i < n; i++)									//iterate through path tokens
 	{
-		ino = search(mip, names[i]);
+		ino = search(mip, names[i]);						//find inode number of name within minode's directories
 
-		if(ino < 0)											//search for path token inode number
+		if(ino < 0)											//name not found display error and return fail
 		{
-			printf("\nERROR: %s not found\n", names[i]);	//name not found display error and return fail
+			printf("\nERROR: %s not found\n", names[i]);
 			return -1;
 		}
 
@@ -174,7 +172,9 @@ int getino(int *dev, char *path)
 		mip = iget(*dev, ino);
 	}
 
-	return mip->ino;										//return inode number of minode
+	ino = mip->ino;											//record inode number and put minode back
+	iput(mip);
+	return ino;												//return inode number
 }
 
 //description: determine name of minode using the parent minode
@@ -187,10 +187,10 @@ int get_name(MINODE *pmip, MINODE *mip, char *name)
 	DIR *dp;
 	char *cp;
 
-	if(mip->ino == 2)											//if mip is root copy "/" to avoid "." cases
-	{
+	if(mip->ino == 2)											//if mip is root copy "/" to avoid when name is "." cases
+	{ 															//	and return success
 		strcpy(name, "/");
-		return;
+		return 1;
 	}
 
 	for(dblk = 0; dblk < 12; dblk++)							//execute across all direct blocks within inode's inode table
@@ -206,15 +206,17 @@ int get_name(MINODE *pmip, MINODE *mip, char *name)
 		{
 			if(dp->inode == mip->ino)							//if inode found copy name into name and return
 			{
-				strncpy(name, dp->name, dp->name_len);
+				strncpy(name, dp->name, dp->name_len);			//if inode found copy name and return success
 				name[dp->name_len] = 0;
-				return;
+				return 1;
 			}
 
 			cp += dp->rec_len;									//set variables to the next directory struct
 			dp = (DIR*)cp;
 		}
 	}
+
+	return -1;													//if all direct blocks searched return fail
 }
 
 //description: return the parent minode of an minode

@@ -7,6 +7,7 @@ int mk_dir(char *path)
 	int pino;
 	MINODE *pmip;
 	char name[MAXNAME];
+	int result;
 
 	if(path[0] && path[0] == '/')		//if path is not empty determine device via path
 		dev = root->dev;				//if path is absolute set device to root's device
@@ -38,7 +39,11 @@ int mk_dir(char *path)
 	pmip->inode.i_atime = time(0L);
 	pmip->dirty = 1;
 
-	return my_mkdir(pmip, base);		//return the success or fail of making the directory
+	result =  my_mkdir(pmip, base);		//return the success or fail of making the directory
+
+	iput(pmip);							//put parent minode back
+
+	return result;
 }
 
 //description: allocate directory detmined by path
@@ -66,7 +71,7 @@ int my_mkdir(MINODE *pmip, char *base)
 		return -1;
 	}
 
-	if((mip = iget(pmip->dev, ino)) < 0)	//if minode not found deallocate and return fail
+	if((mip = iget(pmip->dev, ino)) == 0)	//if minode not found deallocate and return fail
 	{
 		idealloc(pmip->dev, ino);
 		bdealloc(pmip->dev, bno);
@@ -117,6 +122,7 @@ int creat_file(char *path)
 	int pino;
 	MINODE *pmip;
 	char name[MAXNAME];
+	int result;
 
 	if(path[0] && path[0] == '/')			//if path is not empty determine device via path
 		dev = root->dev;					//if path is absolute set device to root's device
@@ -148,7 +154,11 @@ int creat_file(char *path)
 	pmip->inode.i_atime = time(0L);
 	pmip->dirty = 1;
 
-	return my_creat(pmip, base);			//return the success or fail of making the file
+	result =  my_creat(pmip, base);			//return the success or fail of making the file
+
+	iput(pmip);								//put parent minode back
+
+	return result;
 }
 
 //description: allocate file detmined by path
@@ -200,9 +210,9 @@ int enter_name(MINODE *pmip, int ino, char *name)
 
 	need_len = 4 * ((8 + strlen(name) + 3) / 4);					//calculate required length for directory
 
-	for(dblk = 0; dblk < 12; dblk++)							//execute across all direct blocks within inode's inode table
+	for(dblk = 0; dblk < 12; dblk++)								//execute across all direct blocks within inode's inode table
 	{
-		if(!pmip->inode.i_block[dblk])							//break if empty block found
+		if(!pmip->inode.i_block[dblk])								//break if empty block found
 			break;
 
 		get_block(pmip->dev, pmip->inode.i_block[dblk], buf);		//read a directory block from the inode table into buffer
@@ -230,7 +240,6 @@ int enter_name(MINODE *pmip, int ino, char *name)
 			strcpy(dp->name, name);
 
 			put_block(pmip->dev, pmip->inode.i_block[dblk], buf);	//write data block to device
-			iput(pmip);
 
 			return 1;												//return success
 		}
@@ -253,12 +262,10 @@ int enter_name(MINODE *pmip, int ino, char *name)
 			*cp = name[i];
 
 		put_block(pmip->dev, pbno, buf);							//write data block to device
-		iput(pmip);
 
 		return 1;													//return success
 	}
 
 	printf("ERROR: no directory space for %s\n", name);				//no directory space available display error and return fail
-	iput(pmip);
 	return -1;
 }

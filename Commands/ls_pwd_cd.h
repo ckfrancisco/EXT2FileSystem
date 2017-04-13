@@ -34,7 +34,7 @@ int ls_file(MINODE *mip, char *name)
 
 	printf(" %7d", mip->inode.i_size);
 
-	printf(" %s\n", name);						//use name to print name of minode
+	printf(" %d %s\n", mip->refCount, name);						//use name to print name of minode
 }
 
 //description: show information about a single file or all the files within a directory
@@ -58,12 +58,12 @@ int ls(char *path)
 		else
 			dev = running->cwd->dev;	//else use cwd's device
 
-		ino = getino(&dev, path);
+		ino = getino(&dev, path);		//NOTE: when path is not empty we use iget() so we must end with iput()
 		mip = iget(dev, ino);
 	}
 
 	else								//else use running for device and minode
-	{
+	{ 									//NOTE: used in cases when path is not declared
 		dev = running->cwd->dev;
 		mip = running->cwd;
 	}
@@ -77,11 +77,8 @@ int ls(char *path)
 	{
 		for(dblk = 0; dblk < 12; dblk++)					//execute across all direct blocks within inode's inode table
 		{
-			if(!(mip->inode.i_block[dblk]))					//return fail if empty block found
-			{
-				iput(mip);
-				return -1;
-			}
+			if(!(mip->inode.i_block[dblk]))					//break if empty block is encountered
+				break;
 
 			get_block(dev, mip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
 			dp = (DIR*)buf;									//cast buffer as directory pointer
@@ -103,7 +100,9 @@ int ls(char *path)
 			}
 		}
 	}
-	iput(mip);
+
+	if(path[0])												//if we used iget() before then put minode back
+		iput(mip);
 }
 
 //description: show directory struct information stored within a directory minode
@@ -119,19 +118,19 @@ int lsdir(char *path)
 	char *cp;
 	char name[MAXNAME];
 
-	if(path[0])					//if path is not empty determine device via path
+	if(path[0])							//if path is not empty determine device via path
 	{
-		if(path[0] == '/')		//if path is absolute set device to root's device
+		if(path[0] == '/')				//if path is absolute set device to root's device
 			dev = root->dev;
 		else
-			dev = running->cwd->dev;
+			dev = running->cwd->dev;	//else use cwd's device
 
-		ino = getino(&dev, path);
+		ino = getino(&dev, path);		//NOTE: when path is not empty we use iget() so we must end with iput()
 		mip = iget(dev, ino);
 	}
 
-	else						//else use running for device and minode
-	{
+	else								//else use running for device and minode
+	{ 									//NOTE: used in cases when path is not declared
 		dev = running->cwd->dev;
 		mip = running->cwd;
 	}
@@ -142,11 +141,8 @@ int lsdir(char *path)
 
 		for(dblk = 0; dblk < 12; dblk++)						//execute across all direct blocks within inode's inode table
 		{
-			if(!(mip->inode.i_block[dblk]))						//return fail if empty block found
-			{
-				iput(mip);
-				return -1;
-			}
+			if(!(mip->inode.i_block[dblk]))						//break if empty block is encountered
+				break;
 
 			get_block(dev, mip->inode.i_block[dblk], buf);		//read a directory block from the inode table into buffer
 			dp = (DIR*)buf;										//cast buffer as directory pointer
@@ -164,7 +160,9 @@ int lsdir(char *path)
 			}
 		}
 	}
-	iput(mip);
+
+	if(path[0])													//if we used iget() before then put minode back
+		iput(mip);
 }
 
 //description: change current working directory to path
@@ -188,16 +186,19 @@ int chdir(char *path)
 
 	mip = iget(dev, ino);				//get minode of inode number
 
-	if(!S_ISDIR(mip->inode.i_mode))		//if the minode is not a directory then return
+	if(!S_ISDIR(mip->inode.i_mode))		//if the minode is not a directory then return fail
 	{
 		printf("ERROR: %s is not a directory\n", path);
+		iput(mip);
 		return -1;
 	}
 
+	iput(running->cwd);					//put previous cwd minode back
 	running->cwd->dev = mip->dev;
 	running->cwd = mip;					//assign minode to cwd
 
-	pwd(mip);
+	pwd(mip);							//print new cwd path
+	return 1;							//return success
 }
 
 //description: print path name to root recursively from minode
@@ -216,6 +217,8 @@ int rpwd(MINODE *mip)
 	rpwd(pmip);						//print the name of the parent minode
 
 	get_name(pmip, mip, name);		//determine name of minode
+
+	iput(pmip);						//put parent minode back
 
 	printf("/%s", name);			//print the name of minode
 }

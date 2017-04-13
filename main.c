@@ -73,7 +73,7 @@ int main(int argc, char *argv[ ])	// run as a.out [diskname]
 		fgets(line, 128, stdin);
 		line[strlen(line)] = 0;
 
-		printf("line=%s", line);
+		printf("line = %s", line);
 		sscanf(line, "%s %s", cmd, pathname);
 
 		icmd = find_cmd(cmd);
@@ -106,7 +106,7 @@ int main(int argc, char *argv[ ])	// run as a.out [diskname]
 				creat_file(pathname);
 				break;
 			case 6:
-				//rm_dir(pathname);
+				rm_dir(pathname);
 				break;
 			case 7:
 				exit(1);

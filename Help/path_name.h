@@ -44,8 +44,6 @@ int det_dirname(char *path, char *directory)
 	}
 
 	for(i; i > -1 && path[i] != '/'; i--);		//find last index of '/'
-	printf("DIR PATH = %s %d\n", path, i);
-
 
 	if(i < 0)									//if none return empty parent
 		directory[0] = 0;

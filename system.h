@@ -64,7 +64,7 @@ int iblock;				//beginning inode block number
 int inodes_per_block;	//inodes per block
 						//NOTE: Calculated in super_block()
 
-char *disk = "mydisk";	//default device name to read/write
+char *disk = "cf";	//default device name to read/write
 
 char line[MAXLINE];			//line entered by user
 char cmd[MAXCMD];			//command parsed from line
