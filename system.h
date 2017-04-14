@@ -7,7 +7,7 @@
 #define MAXLINE      128	//max length of line
 #define MAXCMD        64	//max length of command
 #define MAXPATH      128	//max length of a path name
-#define MAXNAME	      64	//max length of a name
+#define MAXNAME	     128	//max length of a name
 #define NNAME         32	//maximum number of names to a paths
 
 typedef unsigned char  u8;

@@ -34,7 +34,7 @@ int ls_file(MINODE *mip, char *name)
 
 	printf(" %7d", mip->inode.i_size);
 
-	printf(" %d %s\n", mip->refCount, name);						//use name to print name of minode
+	printf(" %d %s\n", mip->refCount, name);	//use name to print name of minode
 }
 
 //description: show information about a single file or all the files within a directory
@@ -50,6 +50,7 @@ int ls(char *path)
 	DIR *dp;
 	char *cp;
 	char name[MAXNAME];
+	int i;
 
 	if(path[0])							//if path is not empty determine device via path
 	{
@@ -84,11 +85,13 @@ int ls(char *path)
 			dp = (DIR*)buf;									//cast buffer as directory pointer
 			cp = buf;										//cast buffer as "byte" pointer
 
+			printf("Data Block = %d\n", mip->inode.i_block[dblk]);
+
 			while(cp < &buf[BLKSIZE])						//execute while there is another directory struct ahead
 			{
 				dmip = iget(mip->dev, dp->inode);
 
-				strncpy(name, dp->name, dp->name_len);
+				strncpy(name, dp->name, dp->name_len);		//copy directory name into string buffer
 				name[dp->name_len] = 0;
 
 				ls_file(dmip, name);						//ls minode

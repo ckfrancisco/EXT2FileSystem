@@ -108,6 +108,40 @@ int iput(MINODE *mip)
 	put_block(mip->dev, blk, buf);	//write back to deivde
 }
 
+//description: write inode from minode to device regardless of reference count or dirty
+//parameter: minode
+//return:
+int complete_iput(MINODE *mip)
+{
+	int blk;
+	int disp;
+	char buf[BLKSIZE];
+	INODE *ip;
+
+	blk  = (mip->ino-1)/8 + iblock;	//calculate block and offset values
+	disp = (mip->ino-1) % 8;		//NOTE: a set of inodes are stored in a blk
+									//	use disp to determine offset of ino
+									//	within blk
+
+	get_block(mip->dev, blk, buf);	//copy minode into inode pointer within buffer
+	ip = (INODE *)buf + disp;
+	*ip = mip->inode;
+
+	put_block(mip->dev, blk, buf);	//write back to deivde
+}
+
+//description: write all inodes from minodes to device regardless of reference count or dirty
+//parameter:
+//return:
+int iput_all()
+{
+	int i;
+
+	for(i = 0; i < NMINODE; i++)	//write all minodes in use back to device before quitting
+		if(minode[i].refCount)
+			complete_iput(&minode[i]);
+}
+
 //description: determine the inode number of a name within an inode's directories
 //parameter: minode and name
 //return: inode number of name

@@ -237,7 +237,8 @@ int enter_name(MINODE *pmip, int ino, char *name)
 			dp->inode = ino;										//create new directory entry with values
 			dp->rec_len = remain;
 			dp->name_len = strlen(name);
-			strcpy(dp->name, name);
+
+			strncpy(dp->name, name, dp->name_len);
 
 			put_block(pmip->dev, pmip->inode.i_block[dblk], buf);	//write data block to device
 
@@ -251,15 +252,18 @@ int enter_name(MINODE *pmip, int ino, char *name)
 		if(pbno < 0)												//if none available return fail
 			return -1;
 
-		pmip->inode.i_size += BLKSIZE;								//increment parent minode size by BLKSIZE
-		get_block(pmip->dev, pbno, buf);							//read data block into buffer
+		pmip->inode.i_block[dblk] = pbno;							//assign block number to minode data table
+
+		pmip->inode.i_size += BLKSIZE;
+
+		get_block(pmip->dev, pmip->inode.i_block[dblk], buf);		//read a directory block from the inode table into buffer
+		dp = (DIR*)buf;												//cast buffer as directory pointer
 
 		dp->inode = ino;											//create new directory with values
 		dp->rec_len = BLKSIZE;
 		dp->name_len = strlen(name);
 
-		for(i = 0; name[i]; i++, cp++)
-			*cp = name[i];
+		strncpy(dp->name, name, dp->name_len);
 
 		put_block(pmip->dev, pbno, buf);							//write data block to device
 

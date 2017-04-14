@@ -109,6 +109,11 @@ int main(int argc, char *argv[ ])	// run as a.out [diskname]
 				rm_dir(pathname);
 				break;
 			case 7:
+				printf("Saving...\n");
+				for(i = 0; i < 66; i++)
+					printf("=");
+				printf("\n\n\n");
+				iput_all();
 				exit(1);
 				break;
 			default:
