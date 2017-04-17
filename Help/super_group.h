@@ -3,10 +3,11 @@
 //return:
 int super_block()
 {
-	get_block(dev, 1, buf);							//read super block into buffer
-	sp = (SUPER *)buf;							//cast buffer as super block
+	char buf[BLKSIZE];
+	get_block(dev, 1, buf);			//read super block into buffer
+	sp = (SUPER *)buf;				//cast buffer as super block
 
-	if (sp->s_magic != 0xEF53){						//if the file system is not ext2 display error and exit
+	if (sp->s_magic != 0xEF53){		//if the file system is not ext2 display error and exit
 	  printf("ERROR: Device is not an EXT2 file system\n");
 	  exit(1);
 	}
@@ -29,8 +30,9 @@ int super_block()
 //return:
 int group_descriptor()
 {
-	get_block(dev, 2, buf);		//read group descriptor block into buffer
-	gp = (GD *)buf;			//cast buffer as group descriptor
+	char buf[BLKSIZE];
+	get_block(dev, 2, buf);			//read group descriptor block into buffer
+	gp = (GD *)buf;					//cast buffer as group descriptor
 
 
 	bmap = gp->bg_block_bitmap;
@@ -42,5 +44,5 @@ int group_descriptor()
 	printf("bg_inode_table = %d\n\n", iblock);
 
 	get_block(dev, iblock, buf);	//read beginning inode block into buffer
-	ip = (INODE *)buf + 1;		//cast buffer as inode pointer to the second inode (the root's inode)
+	ip = (INODE *)buf + 1;			//cast buffer as inode pointer to the second inode (the root's inode)
 }

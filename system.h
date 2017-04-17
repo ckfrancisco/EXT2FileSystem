@@ -48,7 +48,7 @@ MINODE *root;			//pointer to the root minode
 PROC   proc[NPROC];		//array of process
 PROC *running;			//pointer to the running process
 
-char buf[BLKSIZE];		//global buffer used to blocks from the device
+//char buf[BLKSIZE];		//global buffer used to blocks from the device
 
 SUPER *sp;				//super block pointer
 GD    *gp;				//group descriptor pointer

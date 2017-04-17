@@ -3,25 +3,24 @@
 //return:
 int tokenize(char *path)
 {
-	int i = 0;
-	char *token;
+	int i = 1;
 	char buf[MAXPATH];
 
-	if(!path[0] || !strcmp(path, "/"))			//if path is empty or root return 0
+	if(!path[0] || !strcmp(path, "/"))				//if path is empty or root return 0
 		return 0;
 
-	strcpy(buf, path);							//copy path to buffer to avoid destruction
+	strcpy(buf, path);								//copy path to buffer to avoid destruction
 
-	token = strtok(buf, "/");					//parse path by directories
+	char *token = strtok(buf, "/");					//parse path by directories
 
 	strcpy(names[0], token);
 
-	for(i = 1; token = strtok(NULL, "/"); i++)	//tokenize until null token
+	for(i = 1; token = strtok(NULL, "/"); i++)		//tokenize until null token
 		strcpy(names[i], token);
 
-	names[i][0] = 0;							//null terminate collection of path names
+	names[i][0] = 0;								//null terminate collection of path names
 
-	return i;									//return number of tokens
+	return i;										//return number of tokens
 }
 
 //description: tokenize directory of path name

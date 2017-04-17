@@ -20,13 +20,12 @@ int ls_permissions(MINODE *mip)
 //return:
 int ls_file(MINODE *mip, char *name)
 {
-	char time[64];
-
 	ls_permissions(mip);						//print permission of minode
 	printf(" %3d", mip->inode.i_links_count);	//print information of minode
 	printf(" %3d", mip->inode.i_uid);
 	printf(" %3d", mip->inode.i_gid);
 
+	char time[64];
 	strcpy(time, ctime(&mip->inode.i_ctime));
 	time[strlen(time)-1] = 0;
 	printf(" %13s",time);
@@ -44,13 +43,6 @@ int ls(char *path)
 {
 	int ino;
 	MINODE *mip;
-	MINODE *dmip;
-	int dblk;
-	char buf[BLKSIZE];
-	DIR *dp;
-	char *cp;
-	char name[MAXNAME];
-	int i;
 
 	if(path[0])							//if path is not empty determine device via path
 	{
@@ -76,28 +68,29 @@ int ls(char *path)
 
 	if(S_ISDIR(mip->inode.i_mode))		//if minode is a directory ls all files within
 	{
-		for(dblk = 0; dblk < 12; dblk++)					//execute across all direct blocks within inode's inode table
+		for(int dblk = 0; dblk < 12; dblk++)				//execute across all direct blocks within inode's inode table
 		{
 			if(!(mip->inode.i_block[dblk]))					//break if empty block is encountered
 				break;
 
+			
+			char buf[BLKSIZE];
 			get_block(dev, mip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
-			dp = (DIR*)buf;									//cast buffer as directory pointer
-			cp = buf;										//cast buffer as "byte" pointer
+			DIR *dp = (DIR*)buf;							//cast buffer as directory pointer
 
 			printf("Data Block = %d\n", mip->inode.i_block[dblk]);
 
-			while(cp < &buf[BLKSIZE])						//execute while there is another directory struct ahead
+			while(dp < &buf[BLKSIZE])						//execute while there is another directory struct ahead
 			{
-				dmip = iget(mip->dev, dp->inode);
+				MINODE *dmip = iget(mip->dev, dp->inode);
 
+				char name[MAXNAME];
 				strncpy(name, dp->name, dp->name_len);		//copy directory name into string buffer
 				name[dp->name_len] = 0;
 
 				ls_file(dmip, name);						//ls minode
 
-				cp += dp->rec_len;							//set variables to the next directory struct
-				dp = (DIR*)cp;
+				dp = (char*)dp + dp->rec_len;				//iterate to next directory
 
 				iput(dmip);
 			}
@@ -115,11 +108,6 @@ int lsdir(char *path)
 {
 	int ino;
 	MINODE *mip;
-	int dblk;
-	char buf[BLKSIZE];
-	DIR *dp;
-	char *cp;
-	char name[MAXNAME];
 
 	if(path[0])							//if path is not empty determine device via path
 	{
@@ -142,24 +130,26 @@ int lsdir(char *path)
 	{
 		printf("%3s %7s %8s %s", "ino", "rec_len", "name_len", "name\n");
 
-		for(dblk = 0; dblk < 12; dblk++)						//execute across all direct blocks within inode's inode table
+		for(int dblk = 0; dblk < 12; dblk++)					//execute across all direct blocks within inode's inode table
 		{
 			if(!(mip->inode.i_block[dblk]))						//break if empty block is encountered
 				break;
 
+			char buf[BLKSIZE];
 			get_block(dev, mip->inode.i_block[dblk], buf);		//read a directory block from the inode table into buffer
-			dp = (DIR*)buf;										//cast buffer as directory pointer
-			cp = buf;											//cast buffer as "byte" pointer
+			DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
 
-			while(cp < &buf[BLKSIZE])							//execute while there is another directory struct ahead
+			printf("Data Block = %d\n", mip->inode.i_block[dblk]);
+
+			while((char*)dp < &buf[BLKSIZE])					//execute while there is another directory struct ahead
 			{
+				char name[MAXNAME];
 				strncpy(name, dp->name, dp->name_len);
 				name[dp->name_len] = 0;
 
 				printf("%3d %7d %8d %s\n", dp->inode, dp->rec_len, dp->name_len, name);
 
-				cp += dp->rec_len;								//set variables to the next directory struct
-				dp = (DIR*)cp;
+				dp = (char*)dp + dp->rec_len;					//iterate to next directory
 			}
 		}
 	}
@@ -175,7 +165,6 @@ int chdir(char *path)
 {
 	int ino;
 	MINODE *mip;
-	char name[64];
 
 	if(path[0] == '/')					//initialize device depending on absolute or relative path
 		dev = root->dev;
@@ -209,21 +198,19 @@ int chdir(char *path)
 //return:
 int rpwd(MINODE *mip)
 {
-	MINODE *pmip;
-	char name[MAXNAME];
-
-	if(mip->ino == 2)				//if minode is the root then return
+	if(mip->ino == 2)					//if minode is the root then return
 		return;
 
-	pmip = iget_parent(mip);		//determine parent of minode
+	MINODE *pmip = iget_parent(mip);	//determine parent of minode
 
-	rpwd(pmip);						//print the name of the parent minode
+	rpwd(pmip);							//print the name of the parent minode
 
-	get_name(pmip, mip, name);		//determine name of minode
+	char name[MAXNAME];
+	get_name(pmip, mip, name);			//determine name of minode
 
-	iput(pmip);						//put parent minode back
+	iput(pmip);							//put parent minode back
 
-	printf("/%s", name);			//print the name of minode
+	printf("/%s", name);				//print the name of minode
 }
 
 //description: print root or path name to root recursively from minode
@@ -231,8 +218,6 @@ int rpwd(MINODE *mip)
 //return:
 int pwd(MINODE *mip)
 {
-	char name[64];
-
 	printf("cwd = ");
 
 	if(mip->ino == 2)	//if minode is the root then print '/' and return
