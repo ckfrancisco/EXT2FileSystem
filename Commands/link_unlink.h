@@ -1,7 +1,7 @@
 //description: 
 //parameter: 
 //return: 
-int link(char *path, char *link_path)
+int link(char *path, char *linkpath)
 {
 	int oino = getino(&dev, path);
 	if(oino < 0)
@@ -18,43 +18,43 @@ int link(char *path, char *link_path)
 		return -1;
 	}
 
-	char link_directory[MAXPATH];
-	char link_base[MAXPATH];
-	det_dirname(link_path, link_directory);
-	det_basename(link_path, link_base);
+	char linkdirectory[MAXPATH];
+	char linkbase[MAXPATH];
+	det_dirname(linkpath, linkdirectory);
+	det_basename(linkpath, linkbase);
 
-	int pnino = getino(&dev, link_directory);
-	if(pnino < 0)
+	int pino = getino(&dev, linkdirectory);
+	if(pino < 0)
 	{
-		printf("ERROR: %s does not exist\n", link_directory);
+		printf("ERROR: %s does not exist\n", linkdirectory);
 		iput(omip);
 		return -1;
 	}
 
-	MINODE *pnmip = iget(dev, pnino);
-	if(!S_ISDIR(pnmip->inode.i_mode))
+	MINODE *pmip = iget(dev, pino);
+	if(!S_ISDIR(pmip->inode.i_mode))
 	{
-		printf("ERROR: %s is not a directory\n", link_directory);
+		printf("ERROR: %s is not a directory\n", linkdirectory);
 		iput(omip);
-		iput(pnmip);
+		iput(pmip);
 		return -1;
 	}
 
-	if(search(pnmip, link_base) > 0)
+	if(search(pmip, linkbase) > 0)
 	{
-		printf("ERROR: %s already exists\n", link_base);
+		printf("ERROR: %s already exists\n", linkbase);
 		iput(omip);
-		iput(pnmip);
+		iput(pmip);
 		return -1;
 	}
 
-	int result =  enter_name(pnmip, oino, link_base);
+	int result =  enter_name(pmip, oino, linkbase);
 
 	if(result > 0)
 		omip->inode.i_links_count++;
 
 	iput(omip);
-	iput(pnmip);
+	iput(pmip);
 
 	return result;
 }
@@ -86,7 +86,8 @@ int unlink(char *path)
 		//
 	}
 
-	MINODE *pmip = iget_parent(mip);
+	int pino = getino(&dev, directory);
+	MINODE *pmip = iget(dev, pino);
 
 	int result =  rm_child(pmip, base);
 
@@ -98,3 +99,32 @@ int unlink(char *path)
 //description: 
 //parameter: 
 //return: 
+int symlink(char *path, char *linkpath)
+{
+	int oino = getino(&dev, path);
+	if(oino < 0)
+	{
+		printf("ERROR: %s does not exist\n", path);
+		return -1;
+	}
+
+	MINODE *omip = iget(dev, oino);
+	if(!S_ISREG(omip->inode.i_mode) && !S_ISDIR(omip->inode.i_mode))
+	{
+		printf("ERROR: %s is not a file or directory\n", path);
+		iput(omip);
+		return -1;
+	}
+
+	int ino = creat_file(linkpath);
+	if(ino < 0)
+	{
+		iput(omip);
+		return -1;
+	}
+
+	MINODE *mip = iget(dev, ino);
+	mip->inode.i_mode = 0xA000;
+
+	
+}

@@ -10,6 +10,11 @@ int mk_dir(char *path)
 	else								//else use running for device and minode
 		dev = running->cwd->dev;
 
+	char directory[MAXNAME];
+	char base[MAXNAME];
+	det_dirname(path, directory);
+	det_basename(path, base);
+	
 	int pino = getino(&dev, directory);	//detmine parent inode number
 	if(pino < 0)						//if parent directory not found return fail
 	{
@@ -113,6 +118,11 @@ int creat_file(char *path)
 	else									//else use running for device and minode
 		dev = running->cwd->dev;
 
+	char directory[MAXNAME];
+	char base[MAXNAME];
+	det_dirname(path, directory);
+	det_basename(path, base);
+
 	int pino = getino(&dev, directory);		//detmine parent inode number
 	if(pino < 0)							//if parent directory not found return fail
 	{
@@ -208,7 +218,7 @@ int enter_name(MINODE *pmip, int ino, char *name)
 
 			put_block(pmip->dev, pmip->inode.i_block[dblk], buf);		//write data block to device
 
-			return 1;													//return success
+			return ino;													//return success
 		}
 	}
 
@@ -233,7 +243,7 @@ int enter_name(MINODE *pmip, int ino, char *name)
 
 		put_block(pmip->dev, pbno, buf);								//write data block to device
 
-		return 1;														//return success
+		return ino;														//return success
 	}
 
 	printf("ERROR: no directory space for %s\n", name);					//no directory space available display error and return fail
