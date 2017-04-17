@@ -11,12 +11,13 @@ int mk_dir(char *path)
 		dev = running->cwd->dev;
 
 	int pino = getino(&dev, directory);	//detmine parent inode number
-
 	if(pino < 0)						//if parent directory not found return fail
+	{
+		printf("ERROR: %s does not exist\n", directory);
 		return -1;
+	}
 
 	MINODE *pmip = iget(dev, pino);		//get parent minode
-
 	if(!S_ISDIR(pmip->inode.i_mode))	//if parent minode is not a directory display error and  return fail
 	{
 		printf("ERROR: %s is not a directory\n", directory);
@@ -113,12 +114,13 @@ int creat_file(char *path)
 		dev = running->cwd->dev;
 
 	int pino = getino(&dev, directory);		//detmine parent inode number
-
 	if(pino < 0)							//if parent directory not found return fail
+	{
+		printf("ERROR: %s does not exist\n", directory);
 		return -1;
+	}
 
 	MINODE *pmip = iget(dev, pino);			//get parent minode
-
 	if(!S_ISDIR(pmip->inode.i_mode))		//if parent minode is not a directory display error and return fail
 	{
 		printf("ERROR: %s is not a directory\n", directory);

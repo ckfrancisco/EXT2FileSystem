@@ -66,20 +66,23 @@ int inodes_per_block;	//inodes per block
 
 char *disk = "cf";	//default device name to read/write
 
-char line[MAXLINE];			//line entered by user
-char cmd[MAXCMD];			//command parsed from line
-char pathname[MAXPATH];		//path name parsed from line
-char names[NNAME][MAXNAME];	//tokenized names within pathname
-char directory[MAXPATH];	//directory name of path
-char base[MAXPATH];			//base name of path
+char line[MAXLINE];				//line entered by user
+char cmd[MAXCMD];				//command parsed from line
+char pathname[MAXPATH];			//path name parsed from line
+char linkname[MAXNAME];			//path name for linking functions
+char names[NNAME][MAXNAME];		//tokenized names within pathname
+char directory[MAXPATH];		//directory name of path
+char base[MAXPATH];				//base name of path
 
-int icmd;					//index of command in command name array
-char *cmds[] = {"ls",		//array of command names
+int icmd;						//index of command in command name array
+char *cmds[] = {"ls",			//array of command names
 		"lsdir",
 		"cd",
 		"pwd",
 		"mkdir",
 		"creat",
 		"rmdir", 
+		"link", 
+		"unlink", 
 		"quit",
 		NULL};

@@ -10,12 +10,13 @@ int rm_dir(char *path)
 		dev = running->cwd->dev;
 
 	int ino = getino(&dev, path);				//determine inode number of path
-
 	if(ino < 0)									//if inode number not found return fail
+	{
+		printf("ERROR: %s does not exist\n", path);
 		return -1;
+	}
 
 	MINODE *mip = iget(dev, ino);				//create minode
-
 	if(!S_ISDIR(mip->inode.i_mode))				//if minode is not a directory display error and return fail
 	{
 		printf("ERROR: %s is not a directory\n", base);

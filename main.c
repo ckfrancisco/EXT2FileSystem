@@ -74,7 +74,7 @@ int main(int argc, char *argv[ ])	// run as a.out [diskname]
 		line[strlen(line)] = 0;
 
 		printf("line = %s", line);
-		sscanf(line, "%s %s", cmd, pathname);
+		sscanf(line, "%s %s  %s", cmd, pathname, linkname);
 
 		icmd = find_cmd(cmd);
 
@@ -109,6 +109,12 @@ int main(int argc, char *argv[ ])	// run as a.out [diskname]
 				rm_dir(pathname);
 				break;
 			case 7:
+				link(pathname, linkname);
+				break;
+			case 8:
+				unlink(pathname);
+				break;
+			case 9:
 				printf("Saving...\n");
 				for(i = 0; i < 66; i++)
 					printf("=");

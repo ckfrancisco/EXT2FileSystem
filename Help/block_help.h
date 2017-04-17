@@ -138,16 +138,14 @@ int search(MINODE *mip, char *name)
 		char buf[BLKSIZE];
 		get_block(mip->dev, mip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
 		DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
-		char *cp = buf;										//cast buffer as "byte" pointer
 
-		while(cp < &buf[BLKSIZE])							//execute while there is another directory struct ahead
+		while((char*)dp < &buf[BLKSIZE])							//execute while there is another directory struct ahead
 		{
 			if(!strncmp(dp->name, name, dp->name_len)		//check if directory name matches name
 				&& strlen(name) == dp->name_len)			//prevents . == ..
 				return dp->inode;							//return inode number if found
 
-			cp += dp->rec_len;								//set variables to the next directory struct
-			dp = (DIR*)cp;
+			dp = (char*)dp + dp->rec_len;
 		}
 	}
 
