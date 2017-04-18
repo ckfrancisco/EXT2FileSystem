@@ -9,6 +9,7 @@
 #define MAXPATH      128	//max length of a path name
 #define MAXNAME	     128	//max length of a name
 #define NNAME         32	//maximum number of names to a paths
+#define NARGS          1	//maximum number of args follwing path in a command
 
 typedef unsigned char  u8;
 typedef unsigned short u16;
@@ -48,12 +49,8 @@ MINODE *root;			//pointer to the root minode
 PROC   proc[NPROC];		//array of process
 PROC *running;			//pointer to the running process
 
-//char buf[BLKSIZE];		//global buffer used to blocks from the device
-
 SUPER *sp;				//super block pointer
 GD    *gp;				//group descriptor pointer
-INODE *ip;				//inode pointer
-DIR   *dp;				//directory pointer
 
 int dev;				//file descriptor of device
 int nblocks;			//number of blocks on device
@@ -64,18 +61,20 @@ int iblock;				//beginning inode block number
 int inodes_per_block;	//inodes per block
 						//NOTE: Calculated in super_block()
 
-char *disk = "cf";	//default device name to read/write
+char *device = "cf";	//default device name to read/write
 
 char line[MAXLINE];				//line entered by user
 char cmd[MAXCMD];				//command parsed from line
 char pathname[MAXPATH];			//path name parsed from line
-char linkname[MAXNAME];			//path name for linking functions
 char names[NNAME][MAXNAME];		//tokenized names within pathname
 char directory[MAXPATH];		//directory name of path
 char base[MAXPATH];				//base name of path
+char arg[MAXPATH];				//secondary command argument
 
 int icmd;						//index of command in command name array
-char *cmds[] = {"ls",			//array of command names
+char *cmds[] = {				//array of command names
+		"quit",
+		"ls",
 		"lsdir",
 		"cd",
 		"pwd",
@@ -85,5 +84,5 @@ char *cmds[] = {"ls",			//array of command names
 		"link", 
 		"unlink", 
 		"symlink", 
-		"quit",
+		"read", 
 		NULL};

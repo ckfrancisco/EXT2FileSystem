@@ -3,16 +3,14 @@
 //return: success or fail
 int rm_dir(char *path)
 {
-	if(path[0] && path[0] == '/')				//if path is not empty determine device via path
-		dev = root->dev;						//if path is absolute set device to root's device
-
-	else										//else use running for device and minode
+	if(path[0] == '/')							//initialize device depending on absolute or relative path
+		dev = root->dev;
+	else
 		dev = running->cwd->dev;
 
 	int ino = getino(&dev, path);				//determine inode number of path
 	if(ino < 0)									//if inode number not found return fail
 	{
-		printf("ERROR: %s does not exist\n", path);
 		return -1;
 	}
 
@@ -50,8 +48,8 @@ int rm_dir(char *path)
 	MINODE *pmip = iget_parent(mip);			//determine parent minode
 	iput(mip);
 
-	rm_child(pmip, base);
-	pmip->inode.i_links_count--;
+	rm_child(pmip, base);						//remove name from parent minode directory
+	pmip->inode.i_links_count--;				//update paren minode
 	pmip->inode.i_atime = pmip->inode.i_mtime = time(0L);
 	iput(pmip);
 
@@ -97,7 +95,7 @@ int rm_child(MINODE *pmip, char *base)
 			{
 				int remove_len = dp->rec_len;											//record the rec_len of the directory being removed
 				pdp = dp;																//remember previous directory struct
-				dp = (char*)dp + dp->rec_len;											//iterate to next directory
+				dp = (char*)dp + dp->rec_len;											//point to next directory struct within buffer
 
 				while((char*)pdp < &buf[BLKSIZE])
 				{
@@ -111,7 +109,7 @@ int rm_child(MINODE *pmip, char *base)
 
 					strncpy(pdp->name, dp->name, pdp->name_len);
 
-					pdp = (char*)pdp + pdp->rec_len;									//iterate to next directory
+					pdp = (char*)pdp + pdp->rec_len;									//point to next directory struct within buffer
 					dp = (char*)pdp + remove_len;
 				}
 				
@@ -120,7 +118,7 @@ int rm_child(MINODE *pmip, char *base)
 			}
 
 			pdp = dp;																	//remember previous directory struct
-			dp = (char*)dp + dp->rec_len;												//iterate to next directory
+			dp = (char*)dp + dp->rec_len;												//point to next directory struct within buffer
 		}
 
 		if(!strncmp(dp->name, base, dp->name_len) && dp->name_len == strlen(base))		//remove last directory in data block

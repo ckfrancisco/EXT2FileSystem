@@ -119,7 +119,7 @@ int ialloc(int dev)
 			return i+1;					//return index of inode bit allocated
 		}
 	}
-	printf("ialloc(): no more free inodes\n");
+	printf("ERROR: no more free inodes\n");
 	return -1;							//if no available inodes display error and return fail
 }
 
@@ -143,7 +143,7 @@ int balloc(int dev)
 		}
 	}
 
-	printf("balloc(): no more free blocks\n");
+	printf("ERROR: no more free blocks\n");
 	return -1;							//if no available blocks display error and return fail
 }
 

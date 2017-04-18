@@ -40,9 +40,6 @@ int group_descriptor()
 	printf("bg_block_bitmap = %d\n", gp->bg_block_bitmap);
 	printf("bg_inode_bitmap = %d\n\n", gp->bg_inode_bitmap);
 
-	iblock = gp->bg_inode_table;
+	iblock = gp->bg_inode_table;	//record initial inode block number
 	printf("bg_inode_table = %d\n\n", iblock);
-
-	get_block(dev, iblock, buf);	//read beginning inode block into buffer
-	ip = (INODE *)buf + 1;			//cast buffer as inode pointer to the second inode (the root's inode)
 }

@@ -1,55 +1,52 @@
-//description: create directory detmined by path
-//parameter: path
+//description: create directory determined by path
+//parameter: path name
 //return: success or fail
 int mk_dir(char *path)
 {
-	//path name tokenized by directory and base in main()
-
-	if(path[0] && path[0] == '/')		//if path is not empty determine device via path
-		dev = root->dev;				//if path is absolute set device to root's device
-	else								//else use running for device and minode
+	if(path[0] == '/')						//initialize device depending on absolute or relative path
+		dev = root->dev;
+	else
 		dev = running->cwd->dev;
 
-	char directory[MAXNAME];
-	char base[MAXNAME];
-	det_dirname(path, directory);
-	det_basename(path, base);
+	char newdirectory[MAXNAME];
+	char newbase[MAXNAME];
+	det_dirname(path, newdirectory);
+	det_basename(path, newbase);
 	
-	int pino = getino(&dev, directory);	//detmine parent inode number
-	if(pino < 0)						//if parent directory not found display error and return fail
+	int pino = getino(&dev, newdirectory);	//detmine parent inode number
+	if(pino < 0)							//if parent directory not found display error and return fail
 	{
-		printf("ERROR: %s does not exist\n", directory);
 		return -1;
 	}
 
-	MINODE *pmip = iget(dev, pino);		//get parent minode
-	if(!S_ISDIR(pmip->inode.i_mode))	//if parent minode is not a directory display error and  return fail
+	MINODE *pmip = iget(dev, pino);			//determine parent minode
+	if(!S_ISDIR(pmip->inode.i_mode))		//if parent minode is not a directory display error and  return fail
 	{
-		printf("ERROR: %s is not a directory\n", directory);
+		printf("ERROR: %s is not a directory\n", newdirectory);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, base) > 0)			//if the minode exists within the parent display error and  return fail
+	if(search(pmip, newbase) > 0)			//if name already exists display error and return fail
 	{
-		printf("ERROR: %s already exists\n", base);
+		printf("ERROR: %s already exists\n", newbase);
 		iput(pmip);
 		return -1;
 	}
 
-	pmip->inode.i_links_count++;		//update parent minode
+	pmip->inode.i_links_count++;			//update parent minode
 	pmip->inode.i_atime = time(0L);
 	pmip->dirty = 1;
 
-	int result =  my_mkdir(pmip, base);	//return the success or fail of making the directory
+	int result =  my_mkdir(pmip, newbase);	//return the success or fail of making the directory
 
-	iput(pmip);							//put parent minode back
+	iput(pmip);								//put parent minode back
 
 	return result;
 }
 
-//description: allocate directory detmined by path
-//parameter: parent minode and path
+//description: allocate directory determined by path
+//parameter: parent minode and base name
 //return: success or fail
 int my_mkdir(MINODE *pmip, char *base)
 {
@@ -64,7 +61,7 @@ int my_mkdir(MINODE *pmip, char *base)
 		return -1;
 	}
 
-	MINODE *mip= iget(pmip->dev, ino);
+	MINODE *mip= iget(pmip->dev, ino);		//determine minode of new directory
 	if(!mip)								//if minode not found deallocate and return fail
 	{
 		idealloc(pmip->dev, ino);
@@ -90,12 +87,12 @@ int my_mkdir(MINODE *pmip, char *base)
 	char buf[BLKSIZE];
 	DIR *dp = (DIR*)buf;
 
-	dp->inode = mip->ino;					//set this and parent directories
+	dp->inode = mip->ino;					//assign this and parent directories
 	dp->name_len = 1;
 	dp->rec_len = 4 * ((8 + dp->name_len + 3) / 4);
 	strcpy(dp->name, ".");
 
-	dp = (char*)dp + dp->rec_len;			//iterate to next directory
+	dp = (char*)dp + dp->rec_len;			//point to next directory struct within buffer
 
 	dp->inode = pmip->ino;
 	dp->name_len = 2;
@@ -104,63 +101,62 @@ int my_mkdir(MINODE *pmip, char *base)
 
 	put_block(mip->dev, bno, buf);			//write data block to device
 
-	return enter_name(pmip, ino, base);		//return success or fail of entering name in parent minode
+	return enter_name(pmip, ino, base);	//return success or fail of entering name in parent minode
 }
 
 //description: create file detmined by path
-//parameter: path
+//parameter: path name
 //return: success or fail
 int creat_file(char *path)
 {
-	if(path[0] && path[0] == '/')			//if path is not empty determine device via path
-		dev = root->dev;					//if path is absolute set device to root's device
-
-	else									//else use running for device and minode
+	if(path[0] == '/')							//initialize device depending on absolute or relative path
+		dev = root->dev;
+	else
 		dev = running->cwd->dev;
 
-	char directory[MAXNAME];
-	char base[MAXNAME];
-	det_dirname(path, directory);
-	det_basename(path, base);
+	char newdirectory[MAXNAME];
+	char newbase[MAXNAME];
+	det_dirname(path, newdirectory);
+	det_basename(path, newbase);
 
-	int pino = getino(&dev, directory);		//detmine parent inode number
-	if(pino < 0)							//if parent directory not found return fail
+	int pino = getino(&dev, newdirectory);		//detmine parent inode number
+	if(pino < 0)								//if parent directory not found return fail
 	{
-		printf("ERROR: %s does not exist\n", directory);
 		return -1;
 	}
 
-	MINODE *pmip = iget(dev, pino);			//get parent minode
-	if(!S_ISDIR(pmip->inode.i_mode))		//if parent minode is not a directory display error and return fail
+	MINODE *pmip = iget(dev, pino);				//determine parent minode
+	if(!S_ISDIR(pmip->inode.i_mode))			//if parent minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a directory\n", directory);
+		printf("ERROR: %s is not a directory\n", newdirectory);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, base) > 0)				//if the minode exists within the parent display error and return fail
+	if(search(pmip, newbase) > 0)				//if name already exists display error and return fail
 	{
-		printf("ERROR: %s already exists\n", base);
+		printf("ERROR: %s already exists\n", newbase);
 		iput(pmip);
 		return -1;
 	}
 
-	pmip->inode.i_atime = time(0L);
+	pmip->inode.i_atime = time(0L);				//update parent minode
 	pmip->dirty = 1;
 
-	int result =  my_creat(pmip, base);		//return the success or fail of making the file
+	int result =  my_creat(pmip, newbase);		//return the success or fail of creating the file
 
-	iput(pmip);								//put parent minode back
+	iput(pmip);									//put parent minode back
 
 	return result;
 }
 
 //description: allocate file detmined by path
-//parameter: parent minode and path
+//parameter: parent minode and base name
 //return: success or fail
 int my_creat(MINODE *pmip, char *base)
 {
 	int ino = ialloc(pmip->dev);
+
 	MINODE *mip = iget(pmip->dev, ino);
 	if(!mip)								//if minode not found return fail
 		return -1;
@@ -200,7 +196,7 @@ int enter_name(MINODE *pmip, int ino, char *name)
 		DIR *dp = (DIR*)buf;											//cast buffer as directory pointer
 
 		while((char*)dp + dp->rec_len < &buf[BLKSIZE])					//iterate to last directory in data block
-			dp = (char*)dp + dp->rec_len;								//iterate to next directory
+			dp = (char*)dp + dp->rec_len;								//point to next directory struct within buffer
 
 		int remain = dp->rec_len - (4 * ((8 + dp->name_len + 3) / 4));	//calculate actual remaining space in data block
 
@@ -208,7 +204,7 @@ int enter_name(MINODE *pmip, int ino, char *name)
 		{
 			dp->rec_len = 4 * ((8 + dp->name_len + 3) / 4);				//update the rec_len of the directory prior
 
-			dp = (char*)dp + dp->rec_len;								//iterate to next directory
+			dp = (char*)dp + dp->rec_len;								//point to next directory struct within buffer
 
 			dp->inode = ino;											//create new directory entry with values
 			dp->rec_len = remain;
@@ -233,7 +229,7 @@ int enter_name(MINODE *pmip, int ino, char *name)
 		pmip->inode.i_size += BLKSIZE;
 
 		get_block(pmip->dev, pmip->inode.i_block[dblk], buf);			//read a directory block from the inode table into buffer
-		dp = (DIR*)buf;													//cast buffer as directory pointer
+		DIR* dp = (DIR*)buf;													//cast buffer as directory pointer
 
 		dp->inode = ino;												//create new directory with values
 		dp->rec_len = BLKSIZE;

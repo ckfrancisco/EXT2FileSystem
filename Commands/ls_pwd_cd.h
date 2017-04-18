@@ -26,23 +26,23 @@ int ls_file(MINODE *mip, char *name)
 	printf(" %3d", mip->inode.i_gid);
 
 	char time[64];
-	strcpy(time, ctime(&mip->inode.i_ctime));
-	time[strlen(time)-1] = 0;
-	printf(" %13s",time);
+	strcpy(time, ctime(&mip->inode.i_ctime));	//create and display time string
+	time[strlen(time) - 1] = 0;
+	printf(" %13s", time);
 
 
 	printf(" %7d", mip->inode.i_size);
 
-	printf(" %d %s", mip->refCount, name);	//use name to print name of minode
+	printf(" %s", name);							//use name to print name of minode
 
-	if(S_ISLNK(mip->inode.i_mode))
+	if(S_ISLNK(mip->inode.i_mode))				//if minode is a link display contents
 		printf(" -> %s\n", (char*)mip->inode.i_block);
 	else
 		printf("\n");
 }
 
 //description: show information about a single file or all the files within a directory
-//parameter: path
+//parameter: path name
 //return:
 int ls(char *path)
 {
@@ -60,7 +60,7 @@ int ls(char *path)
 		mip = iget(dev, ino);
 	}
 
-	else								//else use running for device and minode
+	else								//else use cwd's' device and minode
 	{ 									//NOTE: used in cases when path is not declared
 		dev = running->cwd->dev;
 		mip = running->cwd;
@@ -75,7 +75,7 @@ int ls(char *path)
 	{
 		for(int dblk = 0; dblk < 12; dblk++)				//execute across all direct blocks within inode's inode table
 		{
-			if(!(mip->inode.i_block[dblk]))					//break if empty block is encountered
+			if(!(mip->inode.i_block[dblk]))					//if empty block found break
 				break;
 
 			
@@ -95,7 +95,7 @@ int ls(char *path)
 
 				ls_file(dmip, name);						//ls minode
 
-				dp = (char*)dp + dp->rec_len;				//iterate to next directory
+				dp = (char*)dp + dp->rec_len;				//point to next directory struct within buffer
 
 				iput(dmip);
 			}
@@ -125,7 +125,7 @@ int lsdir(char *path)
 		mip = iget(dev, ino);
 	}
 
-	else								//else use running for device and minode
+	else								//else use cwd's' device and minode
 	{ 									//NOTE: used in cases when path is not declared
 		dev = running->cwd->dev;
 		mip = running->cwd;
@@ -137,7 +137,7 @@ int lsdir(char *path)
 
 		for(int dblk = 0; dblk < 12; dblk++)					//execute across all direct blocks within inode's inode table
 		{
-			if(!(mip->inode.i_block[dblk]))						//break if empty block is encountered
+			if(!(mip->inode.i_block[dblk]))						//if empty block found break
 				break;
 
 			char buf[BLKSIZE];
@@ -149,12 +149,12 @@ int lsdir(char *path)
 			while((char*)dp < &buf[BLKSIZE])					//execute while there is another directory struct ahead
 			{
 				char name[MAXNAME];
-				strncpy(name, dp->name, dp->name_len);
+				strncpy(name, dp->name, dp->name_len);			//copy directory name into string buffer
 				name[dp->name_len] = 0;
 
 				printf("%3d %7d %8d %s\n", dp->inode, dp->rec_len, dp->name_len, name);
 
-				dp = (char*)dp + dp->rec_len;					//iterate to next directory
+				dp = (char*)dp + dp->rec_len;					//point to next directory struct within buffer
 			}
 		}
 	}
@@ -177,12 +177,10 @@ int chdir(char *path)
 		dev = running->cwd->dev;
 
 	ino = getino(&dev, path);			//determine inode number of path
-
 	if(ino < 0)							//if minode of path not found return fail
 		return -1;
 
 	mip = iget(dev, ino);				//get minode of inode number
-
 	if(!S_ISDIR(mip->inode.i_mode))		//if the minode is not a directory then return fail
 	{
 		printf("ERROR: %s is not a directory\n", path);
@@ -211,7 +209,7 @@ int rpwd(MINODE *mip)
 	rpwd(pmip);							//print the name of the parent minode
 
 	char name[MAXNAME];
-	get_name(pmip, mip, name);			//determine name of minode
+	get_name(pmip, mip->ino, name);		//determine name of minode
 
 	iput(pmip);							//put parent minode back
 

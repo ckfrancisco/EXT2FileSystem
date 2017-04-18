@@ -10,7 +10,21 @@
 #include "Help/help.h"
 #include "Commands/commands.h"
 
-//description: mount root directory of filesystem to an minode
+//description: initialize global variables
+//parameter:
+//return:
+int init_global()
+{
+	proc[0] = (PROC){.uid = 0, .cwd = 0};
+	proc[1] = (PROC){.uid = 1, .cwd = 0};
+
+	for(int i = 0; i < 100; i++)
+		minode[i] = (MINODE){.refCount = 0};
+
+	root = 0;
+}
+
+//description: mount root directory of file system to an minode
 //parameter:
 //return:
 int mount_root()
@@ -45,19 +59,20 @@ int find_cmd(char *cmd)
 	return -1;						//return false if command never found
 }
 
-int main(int argc, char *argv[ ])	// run as a.out [diskname]
+//description: run as main.out [device name]
+//parameter: argument count and values
+//return:
+int main(int argc, char *argv[ ])
 {
-	int i;
+	if (argc > 1)							//if device name supplied overwrite default
+		device = argv[1];
 
-	if (argc > 1)
-		disk = argv[1];
-
-	if ((dev = open(disk, O_RDWR)) < 0){
-		printf("ERROR: failed to open %s\n", disk);
+	if ((dev = open(device, O_RDWR)) < 0){	//if device fails to open display error and exit
+		printf("ERROR: failed to open %s\n", device);
 		exit(1);
 	}
 
-	printf("CHECKING EXT2 FS...\n");
+	printf("CHECKING EXT2 FS...\n");		//read device and initialize globals
 	super_block();
 	group_descriptor();
 	init_global();
@@ -66,64 +81,67 @@ int main(int argc, char *argv[ ])	// run as a.out [diskname]
 
 	while(1){
 
-		for(i = 0; i < 66; i++)
+		for(int i = 0; i < 66; i++)			//display border
 			printf("=");
 		printf("\n\n\ncf: ");
 
-		fgets(line, 128, stdin);
+		fgets(line, 128, stdin);			//read line
 		line[strlen(line)] = 0;
 
-		printf("line = %s", line);
-		sscanf(line, "%s %s  %s", cmd, pathname, linkname);
+		printf("line = %s", line);			//display line and parse values
+		sscanf(line, "%s %s  %s", cmd, pathname, arg);
 
-		icmd = find_cmd(cmd);
+		icmd = find_cmd(cmd);				//determine index of command
 
 		printf("icmd = %d cmd = %s pathname = %s\n", icmd, cmd, pathname);
 
-		det_dirname(pathname, directory);
+		det_dirname(pathname, directory);	//parse path into directory and base
 		det_basename(pathname, base);
 
 		printf("dir = %s base = %s\n", directory, base);
 
 		switch(icmd)
 		{
-			case 0:
-				ls(pathname);
-				break;
-			case 1:
-				lsdir(pathname);
-				break;
-			case 2:
-				chdir(pathname);
-				break;
-			case 3:
-				pwd(running->cwd);
-				break;
-			case 4:
-				mk_dir(pathname);
-				break;
-			case 5:
-				creat_file(pathname);
-				break;
-			case 6:
-				rm_dir(pathname);
-				break;
-			case 7:
-				link(pathname, linkname);
-				break;
-			case 8:
-				unlink(pathname);
-				break;
-			case 9:
-				symlink(pathname, linkname);
-				break;
-			case 10:
+			case 0:							//put back all minodes before quitting
 				printf("Saving...\n");
-				for(i = 0; i < 66; i++)
+				for(int i = 0; i < 66; i++)
 					printf("=");
 				printf("\n\n\n");
 				iput_all();
 				exit(1);
+				break;
+			case 1:							//list contents within directory
+				ls(pathname);
+				break;
+			case 2:							//list directory struct infomation within directory
+				lsdir(pathname);
+				break;
+			case 3:							//change directory
+				chdir(pathname);
+				break;
+			case 4:							//print working directory
+				pwd(running->cwd);
+				break;
+			case 5:							//make directory
+				mk_dir(pathname);
+				break;
+			case 6:							//create file
+				creat_file(pathname);
+				break;
+			case 7:							//remove directory
+				rm_dir(pathname);
+				break;
+			case 8:							//create hard link to file or link
+				link(pathname, arg);
+				break;
+			case 9:							//remove hard link
+				unlink(pathname);
+				break;
+			case 10:						//creat soft link to directory or file
+				symlink(pathname, arg);
+				break;
+			case 11:						//read contents of soft link
+				readlink(pathname, arg);
 				break;
 			default:
 				printf("What in the god damn hell you talking about?\n");
@@ -132,5 +150,6 @@ int main(int argc, char *argv[ ])	// run as a.out [diskname]
 
 		cmd[0] = 0;
 		pathname[0] = 0;
+		arg[0] = 0;
 	}
 }

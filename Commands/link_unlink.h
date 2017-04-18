@@ -1,37 +1,35 @@
-//description: create a soft link to an existing file
-//parameter: path to existing file and link file
+//description: create a soft link to an old file
+//parameter: path to old file and new file
 //return: success or fail
-int link(char *path, char *linkpath)
+int link(char *oldpath, char *newpath)
 {
-	int oino = getino(&dev, path);										//determine inode of existing file
+	int oino = getino(&dev, oldpath);									//determine inode of old file
 	if(oino < 0)														//if file not found display error and return fail
 	{
-		printf("ERROR: %s does not exist\n", path);
 		return -1;
 	}
 
-	MINODE *omip = iget(dev, oino);										//get minode of existing file
+	MINODE *omip = iget(dev, oino);										//get minode of old file
 	if(!S_ISREG(omip->inode.i_mode) && !S_ISLNK(omip->inode.i_mode))	//if minode is not a file or link display error and return fail
 	{
-		printf("ERROR: %s is not a file or link\n", path);
+		printf("ERROR: %s is not a file or link\n", oldpath);
 		iput(omip);
 		return -1;
 	}
 
-	char linkdirectory[MAXPATH];										//parse link path
+	char linkdirectory[MAXPATH];										//parse new path
 	char linkbase[MAXPATH];
-	det_dirname(linkpath, linkdirectory);
-	det_basename(linkpath, linkbase);
+	det_dirname(newpath, linkdirectory);
+	det_basename(newpath, linkbase);
 
-	int pino = getino(&dev, linkdirectory);								//determinode parent inode of link
+	int pino = getino(&dev, linkdirectory);								//determine parent inode of new file
 	if(pino < 0)														//if parent inode not found display error and return fail
 	{
-		printf("ERROR: %s does not exist\n", linkdirectory);
 		iput(omip);
 		return -1;
 	}
 
-	MINODE *pmip = iget(dev, pino);										//get parent minode of link
+	MINODE *pmip = iget(dev, pino);										//get parent minode of new file
 	if(!S_ISDIR(pmip->inode.i_mode))									//if parent minode is not a directory display error and return fail
 	{
 		printf("ERROR: %s is not a directory\n", linkdirectory);
@@ -40,7 +38,7 @@ int link(char *path, char *linkpath)
 		return -1;
 	}
 
-	if(search(pmip, linkbase) > 0)										//if name of link already exists display error and return fail
+	if(search(pmip, linkbase) > 0)										//if name of new file already exists display error and return fail
 	{
 		printf("ERROR: %s already exists\n", linkbase);
 		iput(omip);
@@ -48,7 +46,7 @@ int link(char *path, char *linkpath)
 		return -1;
 	}
 
-	int result =  enter_name(pmip, oino, linkbase);						//enter name of link into parent directory
+	int result =  enter_name(pmip, oino, linkbase);						//enter name of new file into parent directory
 
 	if(result > 0)														//if name entry is successful increment link count
 		omip->inode.i_links_count++;
@@ -64,18 +62,17 @@ int link(char *path, char *linkpath)
 //return: success or fail
 int unlink(char *path)
 {
-	int ino = getino(&dev, path);									//determine inode of existing file
-	if(ino < 0)														//if file not found display error and return fail
+	int ino = getino(&dev, path);									//determine inode of link
+	if(ino < 0)														//if link not found display error and return fail
 	{
-		printf("ERROR: %s does not exist\n", path);
 		return -1;
 	}
 
-	MINODE *mip = iget(dev, oino);									//get minode of existing file
+	MINODE *mip = iget(dev, ino);									//get minode of link
 	if(!S_ISREG(mip->inode.i_mode) && !S_ISLNK(mip->inode.i_mode))	//if minode is not a file or link display error and return fail
 	{
 		printf("ERROR: %s is not a file or link\n", path);
-		iput(omip);
+		iput(mip);
 		return -1;
 	}
 
@@ -83,7 +80,49 @@ int unlink(char *path)
 
 	if(mip->inode.i_links_count == 0)								//if link count is 0 truncate all data blocks
 	{
-		
+		for(int dblk = 0; dblk < 14; dblk++)
+		{
+			if(dblk < 12)
+				bdealloc(mip->dev, mip->inode.i_block[dblk]);
+
+			else if(dblk == 12)
+			{
+				char ibuf[BLKSIZE];
+				get_block(mip->dev, mip->inode.i_block[dblk], ibuf);
+				int *iblk = (int*)ibuf;
+
+				for(int i = 0; i < 256; i++)
+				{
+					if(!iblk[i])
+						break;
+					bdealloc(mip->dev, iblk[i]);
+				}
+			}
+
+			else
+			{
+				char dibuf[BLKSIZE];
+				get_block(mip->dev, mip->inode.i_block[dblk], dibuf);
+				int *diblk = (int*)dibuf;
+
+				for(int di = 0; di < 256; di++)
+				{
+					if(!diblk[di])
+						break;
+
+					char ibuf[BLKSIZE];
+					get_block(mip->dev, diblk[di], ibuf);
+					int *iblk = (int*)ibuf;
+
+					for(int i = 0; i < 256; i++)
+					{
+						if(!iblk[i])
+							break;
+						bdealloc(mip->dev, iblk[i]);
+					}
+				}
+			}
+		}
 	}
 
 	int pino = getino(&dev, directory);								//determine parent inode of link
@@ -97,42 +136,96 @@ int unlink(char *path)
 	return result;
 }
 
-//description: create a hard link to an existing file
-//parameter: path to existing file and link file
+//description: create a hard link to an old file
+//parameter: path to old file and new file
 //return: success or fail
-int symlink(char *path, char *linkpath)
+int symlink(char *oldpath, char *newpath)
 {
-	int oino = getino(&dev, path);										//determine inode of existing file
-	if(oino < 0)														//if file not found display error and return fail
+	int oino = getino(&dev, oldpath);									//determine inode of old file
+	if(oino < 0)														//if old file not found display error and return fail
 	{
-		printf("ERROR: %s does not exist\n", path);
 		return -1;
 	}
 
-	MINODE *omip = iget(dev, oino);										//get minode of existing file
+	MINODE *omip = iget(dev, oino);										//get minode of old file
 	if(!S_ISREG(omip->inode.i_mode) && !S_ISLNK(omip->inode.i_mode))	//if minode is not a file or link display error and return fail
 	{
-		printf("ERROR: %s is not a file or link\n", path);
+		printf("ERROR: %s is not a file or link\n", oldpath);
 		iput(omip);
 		return -1;
 	}
 
-	int ino = creat_file(linkpath);										//create file and record inode of hard link
+	char linkdirectory[MAXPATH];										//parse new path
+	char linkbase[MAXPATH];
+	det_dirname(newpath, linkdirectory);
+	det_basename(newpath, linkbase);
+
+	int pino = getino(&dev, linkdirectory);								//determine parent inode of new file
+	if(pino < 0)														//if parent inode not found display error and return fail
+	{
+		iput(omip);
+		return -1;
+	}
+
+	MINODE *pmip = iget(dev, pino);										//get parent minode of link
+	if(!S_ISDIR(pmip->inode.i_mode))									//if parent minode is not a directory display error and return fail
+	{
+		printf("ERROR: %s is not a directory\n", linkdirectory);
+		iput(omip);
+		iput(pmip);
+		return -1;
+	}
+
+	if(search(pmip, linkbase) > 0)										//if name of new file already exists display error and return fail
+	{
+		printf("ERROR: %s already exists\n", linkbase);
+		iput(omip);
+		iput(pmip);
+		return -1;
+	}
+
+	int ino = creat_file(newpath);										//create new file and record inode of hard link
 	if(ino < 0)															//if file not created error was displayed in previous funtion so return fail
 	{
 		iput(omip);
+		iput(pmip);
 		return -1;
 	}
 
-	MINODE *mip = iget(dev, ino);										//determine minode of link
+	MINODE *mip = iget(dev, ino);										//determine minode of hard link
 	mip->inode.i_mode = 0xA1FF;											//adjust from file to hard link
-	strcpy((char*)mip->inode.i_block, base);							//copy base of existing path to block
-	mip->inode.i_size = strlen(base);									//adjust size of hard link to length of base
+
+	strcpy((char*)mip->inode.i_block, oldpath);							//copy old path to block
+	mip->inode.i_size = strlen(oldpath);								//adjust size of hard link to length of old path
+
+	mip->dirty = 1;
+	
 	iput(mip);
+	iput(pmip);
 
 	return 1;															//return success
 }
 
-//
-//
-//
+//description: read contents of symlink
+//parameter: soft link path
+//return: success or fail
+int readlink(char *path, char *contents)
+{
+	int ino = getino(&dev, path);							//determine inode of link
+	if(ino < 0)												//if link not found display error and return fail
+	{
+		return -1;
+	}
+
+	MINODE *mip = iget(dev, ino);							//get minode of link
+	if(!S_ISLNK(mip->inode.i_mode))							//if minode is not a link display error and return fail
+	{
+		printf("ERROR: %s is not a link\n", path);
+		iput(mip);
+		return -1;
+	}
+
+	strcpy(contents, (char*)mip->inode.i_block);			//copy contents of soft link and return success
+	printf("%s\n", contents);
+	return 1;
+}
