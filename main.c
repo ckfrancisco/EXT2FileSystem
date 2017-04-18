@@ -115,6 +115,9 @@ int main(int argc, char *argv[ ])	// run as a.out [diskname]
 				unlink(pathname);
 				break;
 			case 9:
+				symlink(pathname, linkname);
+				break;
+			case 10:
 				printf("Saving...\n");
 				for(i = 0; i < 66; i++)
 					printf("=");

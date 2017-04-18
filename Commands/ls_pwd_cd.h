@@ -3,7 +3,7 @@
 //return:
 int ls_permissions(MINODE *mip)
 {
-	printf( (S_ISDIR(mip->inode.i_mode)) ? "d" : "-");
+	printf( (S_ISDIR(mip->inode.i_mode)) ? "d" : (S_ISLNK(mip->inode.i_mode)) ? "l" : "-");
 	printf( (mip->inode.i_mode & S_IRUSR) ? "r" : "-");
 	printf( (mip->inode.i_mode & S_IWUSR) ? "w" : "-");
 	printf( (mip->inode.i_mode & S_IXUSR) ? "x" : "-");
@@ -33,7 +33,12 @@ int ls_file(MINODE *mip, char *name)
 
 	printf(" %7d", mip->inode.i_size);
 
-	printf(" %d %s\n", mip->refCount, name);	//use name to print name of minode
+	printf(" %d %s", mip->refCount, name);	//use name to print name of minode
+
+	if(S_ISLNK(mip->inode.i_mode))
+		printf(" -> %s\n", (char*)mip->inode.i_block);
+	else
+		printf("\n");
 }
 
 //description: show information about a single file or all the files within a directory

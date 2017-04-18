@@ -16,7 +16,7 @@ int mk_dir(char *path)
 	det_basename(path, base);
 	
 	int pino = getino(&dev, directory);	//detmine parent inode number
-	if(pino < 0)						//if parent directory not found return fail
+	if(pino < 0)						//if parent directory not found display error and return fail
 	{
 		printf("ERROR: %s does not exist\n", directory);
 		return -1;

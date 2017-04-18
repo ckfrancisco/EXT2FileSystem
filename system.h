@@ -84,5 +84,6 @@ char *cmds[] = {"ls",			//array of command names
 		"rmdir", 
 		"link", 
 		"unlink", 
+		"symlink", 
 		"quit",
 		NULL};
