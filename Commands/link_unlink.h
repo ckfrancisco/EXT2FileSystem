@@ -79,50 +79,9 @@ int unlink(char *path)
 	mip->inode.i_links_count--;										//decrement minode link count
 
 	if(mip->inode.i_links_count == 0)								//if link count is 0 truncate all data blocks
-	{
-		for(int dblk = 0; dblk < 14; dblk++)
-		{
-			if(dblk < 12)
-				bdealloc(mip->dev, mip->inode.i_block[dblk]);
-
-			else if(dblk == 12)
-			{
-				char ibuf[BLKSIZE];
-				get_block(mip->dev, mip->inode.i_block[dblk], ibuf);
-				int *iblk = (int*)ibuf;
-
-				for(int i = 0; i < 256; i++)
-				{
-					if(!iblk[i])
-						break;
-					bdealloc(mip->dev, iblk[i]);
-				}
-			}
-
-			else
-			{
-				char dibuf[BLKSIZE];
-				get_block(mip->dev, mip->inode.i_block[dblk], dibuf);
-				int *diblk = (int*)dibuf;
-
-				for(int di = 0; di < 256; di++)
-				{
-					if(!diblk[di])
-						break;
-
-					char ibuf[BLKSIZE];
-					get_block(mip->dev, diblk[di], ibuf);
-					int *iblk = (int*)ibuf;
-
-					for(int i = 0; i < 256; i++)
-					{
-						if(!iblk[i])
-							break;
-						bdealloc(mip->dev, iblk[i]);
-					}
-				}
-			}
-		}
+	{	
+		truncate(mip);												//write 0s across data blocks and deallocate them
+		idealloc(mip->dev, mip->ino);								//deallocate inode number
 	}
 
 	int pino = getino(&dev, directory);								//determine parent inode of link
@@ -148,12 +107,6 @@ int symlink(char *oldpath, char *newpath)
 	}
 
 	MINODE *omip = iget(dev, oino);										//get minode of old file
-	if(!S_ISREG(omip->inode.i_mode) && !S_ISLNK(omip->inode.i_mode))	//if minode is not a file or link display error and return fail
-	{
-		printf("ERROR: %s is not a file or link\n", oldpath);
-		iput(omip);
-		return -1;
-	}
 
 	char linkdirectory[MAXPATH];										//parse new path
 	char linkbase[MAXPATH];
@@ -228,4 +181,62 @@ int readlink(char *path, char *contents)
 	strcpy(contents, (char*)mip->inode.i_block);			//copy contents of soft link and return success
 	printf("%s\n", contents);
 	return 1;
+}
+
+//description: clear all of an minode's data blocks
+//parameter: minode
+//return: 
+int truncate(MINODE *mip)
+{
+	char nbuf[BLKSIZE];
+	memset(nbuf, 0, BLKSIZE);
+
+	for(int dblk = 0; dblk < 14; dblk++)							//reset and deallocate all used data blocks
+	{
+		if(dblk < 12)												//direct data blocks
+		{
+			bdealloc(mip->dev, mip->inode.i_block[dblk]);
+			put_block(mip->dev, mip->inode.i_block[dblk], nbuf);
+		}
+
+		else if(dblk == 12)											//access indirect block
+		{
+			char ibuf[BLKSIZE];
+			get_block(mip->dev, mip->inode.i_block[dblk], ibuf);
+			int *iblk = (int*)ibuf;
+
+			for(int i = 0; i < 256; i++)							//truncate all blocks pointed to from indirect block
+			{
+				if(!iblk[i])
+					break;
+				bdealloc(mip->dev, iblk[i]);
+				put_block(mip->dev, iblk[i], nbuf);
+			}
+		}
+
+		else														//access double indirect block
+		{
+			char dibuf[BLKSIZE];
+			get_block(mip->dev, mip->inode.i_block[dblk], dibuf);
+			int *diblk = (int*)dibuf;
+
+			for(int di = 0; di < 256; di++)							//truncate all indirect blocks pointed to from double indirect block
+			{
+				if(!diblk[di])
+					break;
+
+				char ibuf[BLKSIZE];
+				get_block(mip->dev, diblk[di], ibuf);
+				int *iblk = (int*)ibuf;
+
+				for(int i = 0; i < 256; i++)						//truncate all blocks pointed to from indirect block
+				{
+					if(!iblk[i])
+						break;
+					bdealloc(mip->dev, iblk[i]);
+					put_block(mip->dev, iblk[i], nbuf);
+				}
+			}
+		}
+	}
 }

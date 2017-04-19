@@ -21,6 +21,10 @@ int super_block()
 	printf("s_inodes_count = %d\n", sp->s_inodes_count);
 	printf("s_blocks_count = %d\n\n", sp->s_blocks_count);
 
+
+	printf("s_free_inodes_count = %d\n", sp->s_free_inodes_count);
+	printf("s_free_blocks_count = %d\n\n", sp->s_free_blocks_count);
+
 	inodes_per_block = (1024 << sp->s_log_block_size) / sizeof(INODE);	//calculate inodes per block
 	printf("inodes_per_block = %d\n", inodes_per_block);
 }

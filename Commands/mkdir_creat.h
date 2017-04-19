@@ -12,7 +12,7 @@ int mk_dir(char *path)
 	char newbase[MAXNAME];
 	det_dirname(path, newdirectory);
 	det_basename(path, newbase);
-	
+
 	int pino = getino(&dev, newdirectory);	//detmine parent inode number
 	if(pino < 0)							//if parent directory not found display error and return fail
 	{
@@ -155,7 +155,7 @@ int creat_file(char *path)
 //return: success or fail
 int my_creat(MINODE *pmip, char *base)
 {
-	int ino = ialloc(pmip->dev);
+	int ino = ialloc(pmip->dev);			//find free inode
 
 	MINODE *mip = iget(pmip->dev, ino);
 	if(!mip)								//if minode not found return fail
