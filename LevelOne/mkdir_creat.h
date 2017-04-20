@@ -101,7 +101,7 @@ int my_mkdir(MINODE *pmip, char *base)
 
 	put_block(mip->dev, bno, buf);			//write data block to device
 
-	return enter_name(pmip, ino, base);	//return success or fail of entering name in parent minode
+	return enter_name(pmip, ino, base);		//return success or fail of entering name in parent minode
 }
 
 //description: create file detmined by path

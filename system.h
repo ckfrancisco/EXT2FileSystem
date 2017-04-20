@@ -1,7 +1,7 @@
 #define BLKSIZE     1024	//number of bytes per block
 
 #define NMINODE      100	//number of minodes to allocate
-#define NFD           16	//
+#define NFD           16	//max number of open files
 #define NPROC          4	//number of processes able to run
 
 #define MAXLINE      128	//max length of line
@@ -30,10 +30,10 @@ typedef struct minode{
 }MINODE;
 
 typedef struct oft{
-	int  mode;
-	int  refCount;
+	int     mode;
+	int     refCount;
 	MINODE *mptr;
-	int  offset;
+	int     offset;
 }OFT;
 
 typedef struct proc{
@@ -47,7 +47,7 @@ typedef struct proc{
 MINODE minode[NMINODE];	//array of minodes
 MINODE *root;			//pointer to the root minode
 PROC   proc[NPROC];		//array of process
-PROC *running;			//pointer to the running process
+PROC   *running;		//pointer to the running process
 
 SUPER *sp;				//super block pointer
 GD    *gp;				//group descriptor pointer
@@ -83,6 +83,14 @@ char *cmds[] = {				//array of command names
 		"rmdir", 
 		"link", 
 		"unlink", 
-		"symlink", 
+		"symlink", 				//end of level one
+		"open", 
+		"close", 
+		"lseek", 
+		"pfd",
 		"read", 
+		"cat", 
+		"write",
+		"cp",
+		"mv", 					//end of level two
 		NULL};

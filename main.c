@@ -8,7 +8,8 @@
 
 #include "system.h"
 #include "Help/help.h"
-#include "Commands/commands.h"
+#include "LevelOne/level_one.h"
+#include "LevelTwo/level_two.h"
 
 //description: initialize global variables
 //parameter:
