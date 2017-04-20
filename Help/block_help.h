@@ -214,7 +214,7 @@ MINODE *iget_parent(MINODE *mip)
 	get_block(mip->dev, mip->inode.i_block[0], buf);	//read a directory block from the inode table into buffer
 
 	DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
-	dp = (char*)dp + dp->rec_len;						//point to parent directory struct
+	dp = (char*)dp + dp->rec_len;						//point to next directory struct within buffer
 
 	MINODE *pmip = iget(mip->dev, dp->inode);			//get parent minode
 

@@ -3,53 +3,70 @@
 //return: success or fail
 int rm_dir(char *path)
 {
-	if(path[0] == '/')							//initialize device depending on absolute or relative path
+	if(path[0] == '/')										//initialize device depending on absolute or relative path
 		dev = root->dev;
 	else
 		dev = running->cwd->dev;
 
-	int ino = getino(&dev, path);				//determine inode number of path
-	if(ino < 0)									//if inode number not found return fail
+	int ino = getino(&dev, path);							//determine inode number of path
+	if(ino < 0)												//if inode number not found return fail
 	{
 		return -1;
 	}
 
-	MINODE *mip = iget(dev, ino);				//create minode
-	if(!S_ISDIR(mip->inode.i_mode))				//if minode is not a directory display error and return fail
+	MINODE *mip = iget(dev, ino);							//create minode
+	if(!S_ISDIR(mip->inode.i_mode))							//if minode is not a directory display error and return fail
 	{
 		printf("ERROR: %s is not a directory\n", base);
 		iput(mip);
 		return -1;
 	}
 
-	if(mip->refCount > 2)						//if minode is still being referenced display error and return fail
+	if(mip->refCount > 2)									//if minode is still being referenced display error and return fail
 	{
 		printf("ERROR: %s is still being used\n", base);
 		iput(mip);
 		return -1;
 	}
 
-	if(mip->inode.i_links_count > 2)			//if minode contains data blocks display error and return fail
+	if(mip->inode.i_links_count > 2)						//if minode contains other directories display error and return fail
 	{
-		printf("ERROR: %s contains items\n", base);
+		printf("ERROR: %s still contains directories\n", base);
 		iput(mip);
 		return -1;
 	}
 
-	for (int i = 0; i < 12; i++)				//deallocate all block numbers
+	if(mip->inode.i_links_count == 2)						//if minode does not contain other directories check for files
+	{
+		char buf[BLKSIZE];
+		get_block(mip->dev, mip->inode.i_block[0], buf);	//read a directory block from the inode table into buffer
+
+		DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
+		int prev_len = dp->rec_len;
+		dp = (char*)dp + dp->rec_len;						//point to next directory struct within buffer
+
+		if(prev_len + dp->rec_len < BLKSIZE)				//if minode contains files display error and return fail
+		{
+			printf("ERROR: %s still contains files\n", base);
+			iput(mip);
+			return -1;
+		}
+	}
+
+	for (int i = 0; i < 12; i++)							//deallocate all block numbers
 	{
 		if (mip->inode.i_block[i] == 0)
 			continue;
 		bdealloc(mip->dev, mip->inode.i_block[i]);
 	}
 
-	idealloc(mip->dev, mip->ino);				//deallocate inode number
+	idealloc(mip->dev, mip->ino);							//deallocate inode number
 
-	MINODE *pmip = iget_parent(mip);			//determine parent minode
+	MINODE *pmip = iget_parent(mip);						//determine parent minode
 	iput(mip);
 
-	rm_child(pmip, base);						//remove name from parent minode directory
-	pmip->inode.i_links_count--;				//update paren minode
+	rm_child(pmip, base);									//remove name from parent minode directory
+	pmip->inode.i_links_count--;							//update paren minode
 	pmip->inode.i_atime = pmip->inode.i_mtime = time(0L);
 	iput(pmip);
 

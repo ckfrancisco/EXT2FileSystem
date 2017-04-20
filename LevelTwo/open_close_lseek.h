@@ -39,7 +39,7 @@ int open_file(char* path, int mode)
 				return 1;
 			}
 			else
-				return -1
+				return -1;
 		}
 	}
 
@@ -76,7 +76,7 @@ int open_file(char* path, int mode)
 		case 3:					//append
 			oftp->offset = mip->inode.i_size;
 			break;
-		case default:
+		default:
 			break;
 	}
 
@@ -90,7 +90,7 @@ int open_file(char* path, int mode)
 	return i;
 }
 
-int close(int i)
+int close_file(int i)
 {
 	if(i < 0 || i > NFD - 1)
 	{
@@ -112,11 +112,12 @@ int close(int i)
 		return 1;
 
 	iput(oftp->mptr);
+	free(oftp);
 
 	return 1;
 }
 
-int lseek(int i, int pos)
+int l_seek(int i, int pos)
 {
 	if(i < 0 || i > NFD - 1)
 	{
@@ -130,7 +131,13 @@ int lseek(int i, int pos)
 		return -	1;
 	}
 
-	if(offset < 0 || offset > )
+	MINODE *mip = running->fd[i]->mptr;
+	if(pos < 0 || pos > mip->inode.i_size - 1)
+	{
+		printf("ERROR: Position is not within available range\n");
+		return -	1;
+	}
+
 
 
 }

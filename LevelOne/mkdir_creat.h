@@ -90,13 +90,14 @@ int my_mkdir(MINODE *pmip, char *base)
 	dp->inode = mip->ino;					//assign this and parent directories
 	dp->name_len = 1;
 	dp->rec_len = 4 * ((8 + dp->name_len + 3) / 4);
+	int prev_len = dp->rec_len;
 	strcpy(dp->name, ".");
 
 	dp = (char*)dp + dp->rec_len;			//point to next directory struct within buffer
 
 	dp->inode = pmip->ino;
 	dp->name_len = 2;
-	dp->rec_len = 4 * ((8 + dp->name_len + 3) / 4);
+	dp->rec_len = BLKSIZE - prev_len;		//set length to block size minus previous directory entry length.
 	strcpy(dp->name, "..");
 
 	put_block(mip->dev, bno, buf);			//write data block to device
