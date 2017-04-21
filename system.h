@@ -81,9 +81,11 @@ char *cmds[] = {				//array of command names
 		"mkdir",
 		"creat",
 		"rmdir", 
+		"rm", 
 		"link", 
 		"unlink", 
-		"symlink", 				//end of level one
+		"symlink",
+		"readlink", 			//end of level one
 		"open", 
 		"close", 
 		"lseek", 
@@ -94,3 +96,28 @@ char *cmds[] = {				//array of command names
 		"cp",
 		"mv", 					//end of level two
 		NULL};
+
+enum CMDS{
+	QUIT,
+	LS,
+	LSDIR,
+	CD,
+	PWD,
+	MKDIR,
+	CREAT,
+	RMDIR,
+	RM,
+	LINK,
+	UNLINK,
+	SYMLINK,
+	READLINK,
+	OPEN,
+	CLOSE,
+	LSEEK,
+	PFD,
+	READ,
+	CAT,
+	WRITE,
+	CP,
+	MV
+};

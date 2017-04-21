@@ -73,6 +73,62 @@ int rm_dir(char *path)
 	return 1;
 }
 
+//description: remove directory determined by path
+//parameter: path
+//return: success or fail
+int rm_file(char *path)
+{
+	if(path[0] == '/')													//initialize device depending on absolute or relative path
+		dev = root->dev;
+	else
+		dev = running->cwd->dev;
+
+	int ino = getino(&dev, path);										//determine inode number of path
+	if(ino < 0)															//if inode number not found return fail
+	{
+		return -1;
+	}
+
+	MINODE *mip = iget(dev, ino);										//create minode
+	if(!S_ISREG(mip->inode.i_mode))		//if minode is not a directory display error and return fail
+	{
+		printf("ERROR: %s is not a file\n", base);
+		iput(mip);
+		return -1;
+	}
+
+	mip->inode.i_links_count--;											//decrement amount of links
+
+	if(mip->inode.i_links_count == 0)									//if file no longer used deallocate inode number
+	{
+		truncate(mip);													//truncate data blocks and deallocate inode number
+		idealloc(mip->dev, mip->ino);
+	}
+
+	int pino = getino(&dev, directory);									//determine parent inode of file
+	if(pino < 0)														//if parent inode not found display error and return fail
+	{
+		iput(mip);
+		return -1;
+	}
+
+	MINODE *pmip = iget(dev, pino);										//get parent minode of file
+	if(!S_ISDIR(pmip->inode.i_mode))									//if parent minode is not a directory display error and return fail
+	{
+		printf("ERROR: %s is not a directory\n", directory);
+		iput(mip);
+		iput(pmip);
+		return -1;
+	}
+
+	iput(mip);
+
+	rm_child(pmip, base);												//remove name from parent minode directory
+	pmip->inode.i_links_count--;										//update paren minode
+	pmip->inode.i_atime = pmip->inode.i_mtime = time(0L);
+	iput(pmip);
+}
+
 //description: remove child from parent directory
 //parameter: parent minode and path
 //return: success or fail

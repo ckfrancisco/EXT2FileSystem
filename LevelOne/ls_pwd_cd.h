@@ -26,7 +26,7 @@ int ls_file(MINODE *mip, char *name)
 	printf(" %3d", mip->inode.i_gid);
 
 	char time[64];
-	strcpy(time, ctime(&mip->inode.i_ctime));	//create and display time string
+	strcpy(time, ctime(&mip->inode.i_mtime));	//create and display time string
 	time[strlen(time) - 1] = 0;
 	printf(" %13s", time);
 
@@ -68,7 +68,11 @@ int ls(char *path)
 
 	if(S_ISREG(mip->inode.i_mode))		//if minode is a single file ls the file
 	{
-		ls_file(mip, strrchr(path, '/') + 1);
+		char *name = strrchr(path, '/');
+		if(name)
+			ls_file(mip, strrchr(path, '/') + 1);
+		else
+			ls_file(mip, path);
 	}
 
 	if(S_ISDIR(mip->inode.i_mode))		//if minode is a directory ls all files within
@@ -169,7 +173,6 @@ int lsdir(char *path)
 int chdir(char *path)
 {
 	int ino;
-	MINODE *mip;
 
 	if(path[0] == '/')					//initialize device depending on absolute or relative path
 		dev = root->dev;
@@ -180,7 +183,7 @@ int chdir(char *path)
 	if(ino < 0)							//if minode of path not found return fail
 		return -1;
 
-	mip = iget(dev, ino);				//get minode of inode number
+	MINODE *mip = iget(dev, ino);		//get minode of inode number
 	if(!S_ISDIR(mip->inode.i_mode))		//if the minode is not a directory then return fail
 	{
 		printf("ERROR: %s is not a directory\n", path);
@@ -188,7 +191,7 @@ int chdir(char *path)
 		return -1;
 	}
 
-	iput(running->cwd);					//put previous cwd minode back
+	iput(mip);							//put previous cwd minode back
 	running->cwd->dev = mip->dev;
 	running->cwd = mip;					//assign minode to cwd
 

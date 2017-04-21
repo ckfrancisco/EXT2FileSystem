@@ -157,6 +157,7 @@ int getino(int *dev, char *path)
 		if(ino < 0)											//if name not found display error and return fail
 		{
 			printf("\nERROR: %s not found\n", names[i]);
+			iput(mip);
 			return -1;
 		}
 

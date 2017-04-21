@@ -103,7 +103,7 @@ int main(int argc, char *argv[ ])
 
 		switch(icmd)
 		{
-			case 0:							//put back all minodes before quitting
+			case QUIT:							//put back all minodes before quitting
 				printf("Saving...\n");
 				for(int i = 0; i < 66; i++)
 					printf("=");
@@ -111,37 +111,40 @@ int main(int argc, char *argv[ ])
 				iput_all();
 				exit(1);
 				break;
-			case 1:							//list contents within directory
+			case LS:							//list contents within directory
 				ls(pathname);
 				break;
-			case 2:							//list directory struct infomation within directory
+			case LSDIR:							//list directory struct infomation within directory
 				lsdir(pathname);
 				break;
-			case 3:							//change directory
+			case CD:							//change directory
 				chdir(pathname);
 				break;
-			case 4:							//print working directory
+			case PWD:							//print working directory
 				pwd(running->cwd);
 				break;
-			case 5:							//make directory
+			case MKDIR:							//make directory
 				mk_dir(pathname);
 				break;
-			case 6:							//create file
+			case CREAT:							//create file
 				creat_file(pathname);
 				break;
-			case 7:							//remove directory
+			case RMDIR:							//remove directory
 				rm_dir(pathname);
 				break;
-			case 8:							//create hard link to file or link
+			case RM:							//remove directory
+				rm_file(pathname);
+				break;
+			case LINK:							//create hard link to file or link
 				link(pathname, arg);
 				break;
-			case 9:							//remove hard link
+			case UNLINK:						//remove hard link
 				unlink(pathname);
 				break;
-			case 10:						//creat soft link to directory or file
+			case SYMLINK:						//creat soft link to directory or file
 				symlink(pathname, arg);
 				break;
-			case 11:						//read contents of soft link
+			case READLINK:						//read contents of soft link
 				readlink(pathname, arg);
 				break;
 			default:
