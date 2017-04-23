@@ -104,8 +104,8 @@ int complete_iput(MINODE *mip)
 //return:
 int iput_all()
 {
-	for(int i = 0; i < NMINODE; i++)		//write all minodes in use back to device before quitting
-		if(minode[i].refCount)
+	for(int i = 0; i < NMINODE; i++)		//write all minodes if they were used
+		if(minode[i].dirty)
 			complete_iput(&minode[i]);
 }
 

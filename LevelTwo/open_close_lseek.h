@@ -1,6 +1,6 @@
-//description:
-//parameter:
-//return:
+//description: opens a file for a specified mode
+//parameter: path and mode
+//return: success or fail
 int open_file(char* path, int mode)
 {
 	if(path[0] == '/')								//initialize device depending on absolute or relative path
@@ -77,6 +77,8 @@ int open_file(char* path, int mode)
 			oftp->offset = mip->inode.i_size;
 			break;
 		default:
+			printf("ERROR: %d is not a supported mode\n", mode);
+			return -1;
 			break;
 	}
 
@@ -90,6 +92,9 @@ int open_file(char* path, int mode)
 	return i;
 }
 
+//description: close a file descriptor
+//parameter: file descriptor index
+//return: success or fail
 int close_file(int i)
 {
 	if(i < 0 || i > NFD - 1)

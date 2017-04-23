@@ -77,6 +77,7 @@ int unlink(char *path)
 	}
 
 	mip->inode.i_links_count--;										//decrement amount of links
+	mip->dirty = 1;
 
 	if(mip->inode.i_links_count == 0)								//if file no longer used deallocate inode number
 	{
