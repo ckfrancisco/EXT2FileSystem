@@ -65,6 +65,9 @@ int find_cmd(char *cmd)
 //return:
 int main(int argc, char *argv[ ])
 {
+	char directory[MAXPATH];
+	char base[MAXPATH];
+
 	if (argc > 1)							//if device name supplied overwrite default
 		device = argv[1];
 
@@ -90,7 +93,7 @@ int main(int argc, char *argv[ ])
 		line[strlen(line)] = 0;
 
 		printf("line = %s", line);			//display line and parse values
-		sscanf(line, "%s %s  %s", cmd, pathname, arg);
+		sscanf(line, "%s %s %s", cmd, pathname, arg);
 
 		icmd = find_cmd(cmd);				//determine index of command
 
@@ -147,6 +150,22 @@ int main(int argc, char *argv[ ])
 			case READLINK:						//read contents of soft link
 				readlink(pathname, arg);
 				break;
+			/*case OPEN:							//open file
+				int mode = atoi(arg);
+				open(pathname, mode);
+				break;
+			case CLOSE:							//close file
+				int fd = 0;
+				close(fd);
+				break;
+			case LSEEK:							//change offset of file
+				int fd = atoi(pathname);
+				int pos = atoi(arg);
+				lseek(fd, pos);
+				break;
+			case PFD:							//display all open files
+				pfd();
+				break;*/
 			default:
 				printf("What in the god damn hell you talking about?\n");
 				break;

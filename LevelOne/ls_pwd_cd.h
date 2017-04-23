@@ -63,7 +63,7 @@ int ls(char *path)
 	else								//else use cwd's' device and minode
 	{ 									//NOTE: used in cases when path is not declared
 		dev = running->cwd->dev;
-		mip = running->cwd;
+		mip = iget(dev, running->cwd->ino);
 	}
 
 	if(S_ISREG(mip->inode.i_mode))		//if minode is a single file ls the file
@@ -106,8 +106,7 @@ int ls(char *path)
 		}
 	}
 
-	if(path[0])												//if we used iget() before then put minode back
-		iput(mip);
+	iput(mip);
 }
 
 //description: show directory struct information stored within a directory minode
@@ -181,7 +180,7 @@ int chdir(char *path)
 
 	ino = getino(&dev, path);			//determine inode number of path
 	if(ino < 0)							//if minode of path not found return fail
-		return -1;
+		return -1; 
 
 	MINODE *mip = iget(dev, ino);		//get minode of inode number
 	if(!S_ISDIR(mip->inode.i_mode))		//if the minode is not a directory then return fail
@@ -191,7 +190,7 @@ int chdir(char *path)
 		return -1;
 	}
 
-	iput(mip);							//put previous cwd minode back
+	iput(running->cwd);					//put previous cwd minode back
 	running->cwd->dev = mip->dev;
 	running->cwd = mip;					//assign minode to cwd
 

@@ -67,8 +67,6 @@ char line[MAXLINE];				//line entered by user
 char cmd[MAXCMD];				//command parsed from line
 char pathname[MAXPATH];			//path name parsed from line
 char names[NNAME][MAXNAME];		//tokenized names within pathname
-char directory[MAXPATH];		//directory name of path
-char base[MAXPATH];				//base name of path
 char arg[MAXPATH];				//secondary command argument
 
 int icmd;						//index of command in command name array
@@ -110,7 +108,7 @@ enum CMDS{
 	LINK,
 	UNLINK,
 	SYMLINK,
-	READLINK,
+	READLINK, 			//end of level one
 	OPEN,
 	CLOSE,
 	LSEEK,
@@ -119,5 +117,5 @@ enum CMDS{
 	CAT,
 	WRITE,
 	CP,
-	MV
+	MV 					//end of level two
 };

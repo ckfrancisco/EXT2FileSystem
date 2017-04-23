@@ -8,12 +8,12 @@ int mk_dir(char *path)
 	else
 		dev = running->cwd->dev;
 
-	char newdirectory[MAXNAME];
-	char newbase[MAXNAME];
-	det_dirname(path, newdirectory);
-	det_basename(path, newbase);
+	char mkdirectory[MAXNAME];
+	char mkbase[MAXNAME];
+	det_dirname(path, mkdirectory);
+	det_basename(path, mkbase);
 
-	int pino = getino(&dev, newdirectory);	//detmine parent inode number
+	int pino = getino(&dev, mkdirectory);	//detmine parent inode number
 	if(pino < 0)							//if parent directory not found display error and return fail
 	{
 		return -1;
@@ -22,14 +22,14 @@ int mk_dir(char *path)
 	MINODE *pmip = iget(dev, pino);			//determine parent minode
 	if(!S_ISDIR(pmip->inode.i_mode))		//if parent minode is not a directory display error and  return fail
 	{
-		printf("ERROR: %s is not a directory\n", newdirectory);
+		printf("ERROR: %s is not a directory\n", mkdirectory);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, newbase) > 0)			//if name already exists display error and return fail
+	if(search(pmip, mkbase) > 0)			//if name already exists display error and return fail
 	{
-		printf("ERROR: %s already exists\n", newbase);
+		printf("ERROR: %s already exists\n", mkbase);
 		iput(pmip);
 		return -1;
 	}
@@ -38,7 +38,7 @@ int mk_dir(char *path)
 	pmip->inode.i_atime = time(0L);
 	pmip->dirty = 1;
 
-	int result =  my_mkdir(pmip, newbase);	//return the success or fail of making the directory
+	int result =  my_mkdir(pmip, mkbase);	//return the success or fail of making the directory
 
 	iput(pmip);								//put parent minode back
 
@@ -115,12 +115,12 @@ int creat_file(char *path)
 	else
 		dev = running->cwd->dev;
 
-	char newdirectory[MAXNAME];
-	char newbase[MAXNAME];
-	det_dirname(path, newdirectory);
-	det_basename(path, newbase);
+	char mkdirectory[MAXNAME];
+	char mkbase[MAXNAME];
+	det_dirname(path, mkdirectory);
+	det_basename(path, mkbase);
 
-	int pino = getino(&dev, newdirectory);		//detmine parent inode number
+	int pino = getino(&dev, mkdirectory);		//detmine parent inode number
 	if(pino < 0)								//if parent directory not found return fail
 	{
 		return -1;
@@ -129,14 +129,14 @@ int creat_file(char *path)
 	MINODE *pmip = iget(dev, pino);				//determine parent minode
 	if(!S_ISDIR(pmip->inode.i_mode))			//if parent minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a directory\n", newdirectory);
+		printf("ERROR: %s is not a directory\n", mkdirectory);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, newbase) > 0)				//if name already exists display error and return fail
+	if(search(pmip, mkbase) > 0)				//if name already exists display error and return fail
 	{
-		printf("ERROR: %s already exists\n", newbase);
+		printf("ERROR: %s already exists\n", mkbase);
 		iput(pmip);
 		return -1;
 	}
@@ -144,7 +144,7 @@ int creat_file(char *path)
 	pmip->inode.i_atime = time(0L);				//update parent minode
 	pmip->dirty = 1;
 
-	int result =  my_creat(pmip, newbase);		//return the success or fail of creating the file
+	int result =  my_creat(pmip, mkbase);		//return the success or fail of creating the file
 
 	iput(pmip);									//put parent minode back
 

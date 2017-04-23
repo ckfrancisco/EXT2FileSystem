@@ -17,12 +17,12 @@ int link(char *oldpath, char *newpath)
 		return -1;
 	}
 
-	char linkdirectory[MAXPATH];										//parse new path
-	char linkbase[MAXPATH];
-	det_dirname(newpath, linkdirectory);
-	det_basename(newpath, linkbase);
+	char lkdirectory[MAXPATH];											//parse new path
+	char lkbase[MAXPATH];
+	det_dirname(newpath, lkdirectory);
+	det_basename(newpath, lkbase);
 
-	int pino = getino(&dev, linkdirectory);								//determine parent inode of new file
+	int pino = getino(&dev, lkdirectory);								//determine parent inode of new file
 	if(pino < 0)														//if parent inode not found display error and return fail
 	{
 		iput(omip);
@@ -32,24 +32,26 @@ int link(char *oldpath, char *newpath)
 	MINODE *pmip = iget(dev, pino);										//get parent minode of new file
 	if(!S_ISDIR(pmip->inode.i_mode))									//if parent minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a directory\n", linkdirectory);
+		printf("ERROR: %s is not a directory\n", lkdirectory);
 		iput(omip);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, linkbase) > 0)										//if name of new file already exists display error and return fail
+	if(search(pmip, lkbase) > 0)										//if name of new file already exists display error and return fail
 	{
-		printf("ERROR: %s already exists\n", linkbase);
+		printf("ERROR: %s already exists\n", lkbase);
 		iput(omip);
 		iput(pmip);
 		return -1;
 	}
 
-	int result =  enter_name(pmip, oino, linkbase);						//enter name of new file into parent directory
+	int result =  enter_name(pmip, oino, lkbase);						//enter name of new file into parent directory
 
 	if(result > 0)														//if name entry is successful increment link count
 		omip->inode.i_links_count++;
+
+	omip->dirty = 1;
 
 	iput(omip);															//put back minode
 	iput(pmip);															//put back parent minode
@@ -85,10 +87,15 @@ int unlink(char *path)
 		idealloc(mip->dev, mip->ino);
 	}
 
-	int pino = getino(&dev, directory);								//determine parent inode of link
+	char lkdirectory[MAXPATH];										//parse path
+	char lkbase[MAXPATH];
+	det_dirname(path, lkdirectory);
+	det_basename(path, lkbase);
+
+	int pino = getino(&dev, lkdirectory);							//determine parent inode of link
 	MINODE *pmip = iget(dev, pino);									//determine parent minode of link
 
-	int result =  rm_child(pmip, base);								//remove link from parent directory
+	int result =  rm_child(pmip, lkbase);							//remove link from parent directory
 
 	iput(mip);														//put back minode
 	iput(pmip);														//put back parent minode
@@ -107,14 +114,14 @@ int symlink(char *oldpath, char *newpath)
 		return -1;
 	}
 
-	//MINODE *omip = iget(dev, oino);										//get minode of old file
+	//MINODE *omip = iget(dev, oino);									//get minode of old file
 
-	char linkdirectory[MAXPATH];										//parse new path
-	char linkbase[MAXPATH];
-	det_dirname(newpath, linkdirectory);
-	det_basename(newpath, linkbase);
+	char lkdirectory[MAXPATH];											//parse new path
+	char lkbase[MAXPATH];
+	det_dirname(newpath, lkdirectory);
+	det_basename(newpath, lkbase);
 
-	int pino = getino(&dev, linkdirectory);								//determine parent inode of new file
+	int pino = getino(&dev, lkdirectory);								//determine parent inode of new file
 	if(pino < 0)														//if parent inode not found display error and return fail
 	{
 		//iput(omip);
@@ -124,15 +131,15 @@ int symlink(char *oldpath, char *newpath)
 	MINODE *pmip = iget(dev, pino);										//get parent minode of soft link
 	if(!S_ISDIR(pmip->inode.i_mode))									//if parent minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a directory\n", linkdirectory);
+		printf("ERROR: %s is not a directory\n", lkdirectory);
 		//iput(omip);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, linkbase) > 0)										//if name of new file already exists display error and return fail
+	if(search(pmip, lkbase) > 0)										//if name of new file already exists display error and return fail
 	{
-		printf("ERROR: %s already exists\n", linkbase);
+		printf("ERROR: %s already exists\n", lkbase);
 		//iput(omip);
 		iput(pmip);
 		return -1;
@@ -190,6 +197,9 @@ int readlink(char *path, char *contents)
 //return: 
 int truncate(MINODE *mip)
 {
+	if(S_ISLNK(mip->inode.i_mode))
+		return;
+
 	char nbuf[BLKSIZE];
 	memset(nbuf, 0, BLKSIZE);
 
