@@ -111,21 +111,18 @@ int local_read(int fd, int nbytes)
 			printf("*");
 	printf("\n");
 
-	while(n = read_file(fd, buf, 1024))	//execute while number of bytes read is above 0
+	while(n = (nbytes < 1024) ? 			//execute while number of bytes read is above 0
+		read_file(fd, buf, nbytes) :
+		read_file(fd, buf, 1024))
 	{
 		if(n < 1024)						//mark end of buffer with null character
 			buf[n] = 0;
-
-		if(nbytes < count + n)
-			n = nbytes - count;
-
+			
 		for(int i = 0; i < n; i++)			//print until null or end of buffer
 			putchar(buf[i]);
 
+		nbytes -= n;						//decrement number of bytes to be read by n
 		count += n;							//increment number of bytes read by n
-
-		if(nbytes == count)
-			break;
 	}
 
 	printf("\n");
