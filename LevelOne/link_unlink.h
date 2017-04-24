@@ -1,7 +1,7 @@
 //description: create a soft link to an old file
 //parameter: path to old file and new file
 //return: success or fail
-int link(char *oldpath, char *newpath)
+int local_link(char *oldpath, char *newpath)
 {
 	int oino = getino(&dev, oldpath);									//determine inode of old file
 	if(oino < 0)														//if file not found display error and return fail
@@ -62,7 +62,7 @@ int link(char *oldpath, char *newpath)
 //description: unlink a file or link
 //parameter: path to file or link
 //return: success or fail
-int unlink(char *path)
+int local_unlink(char *path)
 {
 	int ino = getino(&dev, path);									//determine inode of link
 	if(ino < 0)														//if link not found display error and return fail
@@ -106,7 +106,7 @@ int unlink(char *path)
 //description: create a hard link to an old file
 //parameter: path to old file and new file
 //return: success or fail
-int symlink(char *oldpath, char *newpath)
+int local_symlink(char *oldpath, char *newpath)
 {
 	int oino = getino(&dev, oldpath);									//determine inode of old file
 	if(oino < 0)														//if old file not found display error and return fail
@@ -145,7 +145,7 @@ int symlink(char *oldpath, char *newpath)
 		return -1;
 	}
 
-	int ino = creat_file(newpath);										//create new file and record inode of hard link
+	int ino = local_creat(newpath);									//create new file and record inode of hard link
 	if(ino < 0)															//if file not created error was displayed in previous funtion so return fail
 	{
 		//iput(omip);
@@ -170,7 +170,7 @@ int symlink(char *oldpath, char *newpath)
 //description: read contents of symlink
 //parameter: soft link path
 //return: success or fail
-int readlink(char *path, char *contents)
+int local_readlink(char *path, char *contents)
 {
 	int ino = getino(&dev, path);							//determine inode of soft link
 	if(ino < 0)												//if soft link not found display error and return fail

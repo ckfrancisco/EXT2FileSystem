@@ -1,7 +1,7 @@
 //description: remove directory determined by path
 //parameter: path
 //return: success or fail
-int rm_dir(char *path)
+int local_rmdir(char *path)
 {
 	if(path[0] == '/')										//initialize device depending on absolute or relative path
 		dev = root->dev;
@@ -82,7 +82,7 @@ int rm_dir(char *path)
 //description: remove directory determined by path
 //parameter: path
 //return: success or fail
-int rm_file(char *path)
+int local_rm(char *path)
 {
 	if(path[0] == '/')												//initialize device depending on absolute or relative path
 		dev = root->dev;

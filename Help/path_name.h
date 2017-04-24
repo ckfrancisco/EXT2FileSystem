@@ -1,7 +1,7 @@
 //description: tokenize path name
-//parameter: path
+//parameter: path and double array for tokens
 //return:
-int tokenize(char *path)
+int tokenize(char *path, char names[NNAME][MAXNAME])
 {
 	int i = 1;
 	char buf[MAXPATH];

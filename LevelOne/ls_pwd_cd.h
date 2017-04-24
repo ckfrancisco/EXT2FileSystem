@@ -44,7 +44,7 @@ int ls_file(MINODE *mip, char *name)
 //description: show information about a single file or all the files within a directory
 //parameter: path name
 //return:
-int ls(char *path)
+int local_ls(char *path)
 {
 	int ino;
 	MINODE *mip;
@@ -112,7 +112,7 @@ int ls(char *path)
 //description: show directory struct information stored within a directory minode
 //parameter: path
 //return:
-int lsdir(char *path)
+int local_lsdir(char *path)
 {
 	int ino;
 	MINODE *mip;
@@ -169,7 +169,7 @@ int lsdir(char *path)
 //description: change current working directory to path
 //parameter: path
 //return:
-int chdir(char *path)
+int local_chdir(char *path)
 {
 	int ino;
 
@@ -194,7 +194,7 @@ int chdir(char *path)
 	running->cwd->dev = mip->dev;
 	running->cwd = mip;					//assign minode to cwd
 
-	pwd(mip);							//print new cwd path
+	local_pwd(mip);						//print new cwd path
 	return 1;							//return success
 }
 
@@ -221,7 +221,7 @@ int rpwd(MINODE *mip)
 //description: print root or path name to root recursively from minode
 //parameter: minode
 //return:
-int pwd(MINODE *mip)
+int local_pwd(MINODE *mip)
 {
 	printf("cwd = ");
 

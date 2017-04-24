@@ -1,7 +1,7 @@
 //description: opens a file for a specified mode
 //parameter: path and mode
 //return: success or fail
-int open_file(char* path, int mode)
+int local_open(char* path, int mode)
 {
 	if(path[0] == '/')								//initialize device depending on absolute or relative path
 		dev = root->dev;
@@ -31,17 +31,18 @@ int open_file(char* path, int mode)
 
 	for(int i = 0; i < NFD; i++)					//check if file is already open
 	{
-		if(running->fd[i]->mptr == mip)
+		if(running->fd[i] && running->fd[i]->mptr== mip)
 		{
 			if(running->fd[i]->mode == 0)			//if file is open for read then change mode
 			{
 				running->fd[i]->mode = mode;
-				return 1;
+				running->fd[i]->refCount++;			//increment reference count and return index
+				return i;
 			}
 			else									//else display error and return fail
 			{
 				printf("ERROR: %s is already open in another mode\n", path);
-				return 1;
+				return -1;
 			}
 		}
 	}
@@ -94,13 +95,13 @@ int open_file(char* path, int mode)
 
 	mip->dirty = 1;
 
-	return i;
+	return i;										//return index of new file descriptor
 }
 
 //description: close a file descriptor
 //parameter: file descriptor index
 //return: success or fail
-int close_file(int i)
+int local_close(int i)
 {
 	if(i < 0 || i > NFD - 1)	//if file descriptor not within range display error and return fail
 	{
@@ -115,12 +116,12 @@ int close_file(int i)
 	}
 
 	OFT *oftp = running->fd[i];
-	running->fd[i] = 0;			//disable file descriptor
 	oftp->refCount--;			//decrement file descriptor reference count
 
 	if(oftp->refCount > 0)		//if file descriptor is still in use return success
 		return 1;
 
+	running->fd[i] = 0;			//disable file descriptor
 	iput(oftp->mptr);			//else put back minode and free file descriptor and return success
 	free(oftp);
 
@@ -130,7 +131,7 @@ int close_file(int i)
 //description: change offset of a file descriptor
 //parameter: file descriptor index and new offset
 //return: success or fail
-int l_seek(int i, int pos)
+int local_lseek(int i, int pos)
 {
 	if(i < 0 || i > NFD - 1)					//if file descriptor not within range display error and return fail
 	{
@@ -141,14 +142,14 @@ int l_seek(int i, int pos)
 	if(!running->fd[i])							//if file descriptor not open display error and return fail
 	{
 		printf("ERROR: File descriptor is not open\n");
-		return -	1;
+		return -1;
 	}
 
 	MINODE *mip = running->fd[i]->mptr;
 	if(pos < 0 || pos > mip->inode.i_size - 1)	//if offset not within range display error and return fail
 	{
 		printf("ERROR: Position is not within available range\n");
-		return -	1;
+		return -1;
 	}
 
 	running->fd[i]->offset = pos;				//update file descriptor offset and return success
@@ -158,13 +159,13 @@ int l_seek(int i, int pos)
 //description: display current file descriptor values
 //parameter: 
 //return: 
-int pfd()
+int local_pfd()
 {
-	printf("%s %6s %5s %6s [%3s, %3s]\n", "fd", "mode", "count", "offset", "dev", "ino");
+	printf("%2s %6s %5s %6s [%3s, %3s]\n", "fd", "mode", "count", "offset", "dev", "ino");
 
 	for(int i = 0; i < NFD; i++)
 	{
-		if(running->fd[i]->mptr != 0)
+		if(running->fd[i])
 		{
 			printf("%2d ", i);
 
@@ -184,8 +185,7 @@ int pfd()
 					break;
 			}
 
-			printf("%5s %6s [%3s, %3s]\n", running->fd[i]->refCount, running->fd[i]->offset,
-											running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
+			printf("%5d %6d [%3d, %3d]\n", running->fd[i]->refCount, running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
 		}
 	}
 }

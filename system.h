@@ -61,13 +61,7 @@ int iblock;				//beginning inode block number
 int inodes_per_block;	//inodes per block
 						//NOTE: Calculated in super_block()
 
-char *device = "cf";	//default device name to read/write
-
-char line[MAXLINE];				//line entered by user
-char cmd[MAXCMD];				//command parsed from line
-char pathname[MAXPATH];			//path name parsed from line
-char names[NNAME][MAXNAME];		//tokenized names within pathname
-char arg[MAXPATH];				//secondary command argument
+char *device = "diskimage";	//default device name to read/write
 
 int icmd;						//index of command in command name array
 char *cmds[] = {				//array of command names
@@ -113,7 +107,7 @@ enum CMDS{
 	CLOSE,
 	LSEEK,
 	PFD,
-	READ,
+	READ, 
 	CAT,
 	WRITE,
 	CP,

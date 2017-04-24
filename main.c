@@ -60,13 +60,34 @@ int find_cmd(char *cmd)
 	return -1;						//return false if command never found
 }
 
+//description: parse path variables from line
+//parameter: line, cmd, path, directory, and base pointers
+//return: 
+int parse_path(char *line, char *cmd, char *path, char *directory, char *base)
+{
+		sscanf(line, "%s %s", cmd, path);
+
+		printf("icmd = %d cmd = %s pathname = %s\n", icmd, cmd, path);
+
+		det_dirname(path, directory);	//parse path into directory and base
+		det_basename(path, base);
+
+		printf("dir = %s base = %s\n", directory, base);
+}
+
 //description: run as main.out [device name]
 //parameter: argument count and values
 //return:
 int main(int argc, char *argv[ ])
 {
-	char directory[MAXPATH];
-	char base[MAXPATH];
+	char line[MAXLINE] = "";		//line entered by user
+	char cmd[MAXCMD] = "";			//command parsed from line
+
+	char pathname[MAXPATH] = "";	//path name
+	char directory[MAXPATH] = "";	//directory of path name
+	char base[MAXPATH] = "";		//base of path name
+
+
 
 	if (argc > 1)							//if device name supplied overwrite default
 		device = argv[1];
@@ -93,16 +114,9 @@ int main(int argc, char *argv[ ])
 		line[strlen(line)] = 0;
 
 		printf("line = %s", line);			//display line and parse values
-		sscanf(line, "%s %s %s", cmd, pathname, arg);
+		sscanf(line, "%s", cmd);
 
 		icmd = find_cmd(cmd);				//determine index of command
-
-		printf("icmd = %d cmd = %s pathname = %s\n", icmd, cmd, pathname);
-
-		det_dirname(pathname, directory);	//parse path into directory and base
-		det_basename(pathname, base);
-
-		printf("dir = %s base = %s\n", directory, base);
 
 		switch(icmd)
 		{
@@ -115,57 +129,140 @@ int main(int argc, char *argv[ ])
 				exit(1);
 				break;
 			case LS:							//list contents within directory
-				ls(pathname);
+				parse_path(line, cmd, pathname, directory, base);
+				local_ls(pathname);
 				break;
 			case LSDIR:							//list directory struct infomation within directory
-				lsdir(pathname);
+				parse_path(line, cmd, pathname, directory, base);
+				local_lsdir(pathname);
 				break;
 			case CD:							//change directory
-				chdir(pathname);
+				parse_path(line, cmd, pathname, directory, base);
+				local_chdir(pathname);
 				break;
 			case PWD:							//print working directory
-				pwd(running->cwd);
+				local_pwd(running->cwd);
 				break;
 			case MKDIR:							//make directory
-				mk_dir(pathname);
+				parse_path(line, cmd, pathname, directory, base);
+				local_mkdir(pathname);
 				break;
 			case CREAT:							//create file
-				creat_file(pathname);
+				parse_path(line, cmd, pathname, directory, base);
+				local_creat(pathname);
 				break;
 			case RMDIR:							//remove directory
-				rm_dir(pathname);
+				parse_path(line, cmd, pathname, directory, base);
+				local_rmdir(pathname);
 				break;
 			case RM:							//remove directory
-				rm_file(pathname);
+				parse_path(line, cmd, pathname, directory, base);
+				local_rm(pathname);
 				break;
 			case LINK:							//create hard link to file or link
-				link(pathname, arg);
-				break;
+				{
+					char linkname[MAXPATH] = "";
+					char linkdirectory[MAXPATH] = "";
+					char linkbase[MAXPATH] = "";
+					sscanf(line, "%s %s %s", cmd, pathname, linkname);
+
+					printf("icmd = %d cmd = %s pathname = %s linkname = %s\n", icmd, cmd, pathname, linkname);
+
+					det_dirname(pathname, directory);		//parse path into directory and base
+					det_basename(pathname, base);
+					printf("dir = %s base = %s\n", directory, base);
+
+					det_dirname(linkname, linkdirectory);	//parse link path into directory and base
+					det_basename(linkname, linkbase);
+					printf("link dir = %s link base = %s\n", linkdirectory, linkbase);
+
+					local_link(pathname, linkname);
+					break;
+				}
 			case UNLINK:						//remove hard link
-				unlink(pathname);
+				parse_path(line, cmd, pathname, directory, base);
+				local_unlink(pathname);
 				break;
 			case SYMLINK:						//creat soft link to directory or file
-				symlink(pathname, arg);
-				break;
+				{
+					char linkname[MAXPATH] = "";
+					char linkdirectory[MAXPATH] = "";
+					char linkbase[MAXPATH] = "";
+					sscanf(line, "%s %s %s", cmd, pathname, linkname);
+
+					printf("icmd = %d cmd = %s pathname = %s linkname = %s\n", icmd, cmd, pathname, linkname);
+
+					det_dirname(pathname, directory);		//parse path into directory and base
+					det_basename(pathname, base);
+					printf("dir = %s base = %s\n", directory, base);
+
+					det_dirname(linkname, linkdirectory);	//parse link path into directory and base
+					det_basename(linkname, linkbase);
+					printf("link dir = %s link base = %s\n", linkdirectory, linkbase);
+
+					local_symlink(pathname, linkname);
+					break;
+				}
 			case READLINK:						//read contents of soft link
-				readlink(pathname, arg);
-				break;
-			/*case OPEN:							//open file
-				int mode = atoi(arg);
-				open(pathname, mode);
-				break;
+				{
+					char contents[MAXPATH] = "";
+					parse_path(line, cmd, pathname, directory, base);
+					local_readlink(pathname, contents);
+					break;
+				}
+			case OPEN:							//open file
+				{
+					int mode = -1;
+					sscanf(line, "%s %s %d", cmd, pathname, &mode);
+
+					printf("icmd = %d cmd = %s pathname = %s mode = %d\n", icmd, cmd, pathname, mode);
+
+					det_dirname(pathname, directory);		//parse path into directory and base
+					det_basename(pathname, base);
+					printf("dir = %s base = %s\n", directory, base);
+
+					local_open(pathname, mode);
+					break;
+				}
 			case CLOSE:							//close file
-				int fd = 0;
-				close(fd);
-				break;
+				{
+					int fd = -1;
+					sscanf(line, "%s %d", cmd, &fd);
+
+					printf("icmd = %d cmd = %s fd = %d\n", icmd, cmd, fd);
+
+					local_close(fd);
+					break;
+				}
 			case LSEEK:							//change offset of file
-				int fd = atoi(pathname);
-				int pos = atoi(arg);
-				lseek(fd, pos);
-				break;
+				{
+					int fd = -1;
+					int offset = -1;
+					sscanf(line, "%s %d %d", cmd, &fd, &offset);
+
+					printf("icmd = %d cmd = %s fd = %d offset = %d\n", icmd, cmd, fd, offset);
+
+					local_lseek(fd, offset);
+					break;
+				}
 			case PFD:							//display all open files
-				pfd();
-				break;*/
+				local_pfd();
+				break;
+			case READ:							//change offset of file
+				{
+					int fd = -1;
+					int nbytes = -1;
+					sscanf(line, "%s %d %d", cmd, &fd, &nbytes);
+
+					printf("icmd = %d cmd = %s fd = %d, nbytes = %d\n", icmd, cmd, fd, nbytes);
+
+					local_read(fd, nbytes);
+					break;
+				}
+			case CAT:							//display file to screen
+				parse_path(line, cmd, pathname, directory, base);
+				local_cat(pathname);
+				break;
 			default:
 				printf("What in the god damn hell you talking about?\n");
 				break;
@@ -173,6 +270,5 @@ int main(int argc, char *argv[ ])
 
 		cmd[0] = 0;
 		pathname[0] = 0;
-		arg[0] = 0;
 	}
 }

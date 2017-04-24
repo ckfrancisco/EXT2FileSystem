@@ -1,9 +1,9 @@
 //description: create directory determined by path
 //parameter: path name
 //return: success or fail
-int mk_dir(char *path)
+int local_mkdir(char *path)
 {
-	if(path[0] == '/')						//initialize device depending on absolute or relative path
+	if(path[0] == '/')							//initialize device depending on absolute or relative path
 		dev = root->dev;
 	else
 		dev = running->cwd->dev;
@@ -13,34 +13,34 @@ int mk_dir(char *path)
 	det_dirname(path, mkdirectory);
 	det_basename(path, mkbase);
 
-	int pino = getino(&dev, mkdirectory);	//detmine parent inode number
-	if(pino < 0)							//if parent directory not found display error and return fail
+	int pino = getino(&dev, mkdirectory);		//detmine parent inode number
+	if(pino < 0)								//if parent directory not found display error and return fail
 	{
 		return -1;
 	}
 
-	MINODE *pmip = iget(dev, pino);			//determine parent minode
-	if(!S_ISDIR(pmip->inode.i_mode))		//if parent minode is not a directory display error and  return fail
+	MINODE *pmip = iget(dev, pino);				//determine parent minode
+	if(!S_ISDIR(pmip->inode.i_mode))			//if parent minode is not a directory display error and  return fail
 	{
 		printf("ERROR: %s is not a directory\n", mkdirectory);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, mkbase) > 0)			//if name already exists display error and return fail
+	if(search(pmip, mkbase) > 0)				//if name already exists display error and return fail
 	{
 		printf("ERROR: %s already exists\n", mkbase);
 		iput(pmip);
 		return -1;
 	}
 
-	pmip->inode.i_links_count++;			//update parent minode
+	pmip->inode.i_links_count++;				//update parent minode
 	pmip->inode.i_atime = time(0L);
 	pmip->dirty = 1;
 
-	int result =  my_mkdir(pmip, mkbase);	//return the success or fail of making the directory
+	int result =  mk_dir(pmip, mkbase);			//return the success or fail of making the directory
 
-	iput(pmip);								//put parent minode back
+	iput(pmip);									//put parent minode back
 
 	return result;
 }
@@ -48,7 +48,7 @@ int mk_dir(char *path)
 //description: allocate directory determined by path
 //parameter: parent minode and base name
 //return: success or fail
-int my_mkdir(MINODE *pmip, char *base)
+int mk_dir(MINODE *pmip, char *base)
 {
 	int ino = ialloc(pmip->dev);			//find free inode
 	if(ino < 0)								//if none avialble return fail
@@ -108,7 +108,7 @@ int my_mkdir(MINODE *pmip, char *base)
 //description: create file detmined by path
 //parameter: path name
 //return: success or fail
-int creat_file(char *path)
+int local_creat(char *path)
 {
 	if(path[0] == '/')							//initialize device depending on absolute or relative path
 		dev = root->dev;
@@ -144,7 +144,7 @@ int creat_file(char *path)
 	pmip->inode.i_atime = time(0L);				//update parent minode
 	pmip->dirty = 1;
 
-	int result =  my_creat(pmip, mkbase);		//return the success or fail of creating the file
+	int result =  creat_file(pmip, mkbase);		//return the success or fail of creating the file
 
 	iput(pmip);									//put parent minode back
 
@@ -154,7 +154,7 @@ int creat_file(char *path)
 //description: allocate file detmined by path
 //parameter: parent minode and base name
 //return: success or fail
-int my_creat(MINODE *pmip, char *base)
+int creat_file(MINODE *pmip, char *base)
 {
 	int ino = ialloc(pmip->dev);			//find free inode
 
