@@ -49,6 +49,7 @@ int det_dirname(char *path, char *directory)
 
 	else if(i == 0)								//if path[0] is the only '/' just copy "/"
 		strcpy(directory, "/");
+		
 	else										//else copy to index of last '/'
 	{
 		strncpy(directory, path, i);

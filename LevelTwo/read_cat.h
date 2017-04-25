@@ -27,14 +27,14 @@ int read_file(int fd, char buf[], int nbytes)
 	int remain = BLKSIZE - start;												//remaining bytes available within block
 	int avail = running->fd[fd]->mptr->inode.i_size - running->fd[fd]->offset;	//remaining bytes in file
 
-	if(remain > avail)
-		remain = avail;
-
 	int count = 0;
 
 	while(nbytes && avail)														//execute loop until nbytes read or end of file
 	{
 		char readbuf[BLKSIZE];
+		
+		if(remain > avail)														//if the amount of bytes remaining in the block
+			remain = avail;														// is greater then available bytes then set to avail
 
 		if(lblk < 12)															//read direct block
 		{
@@ -70,19 +70,21 @@ int read_file(int fd, char buf[], int nbytes)
 
 		if(nbytes <= remain)													//if number of bytes to be read is less than remain
 		{
-			strncpy(&buf[count], readbuf, nbytes);								//copy specified number of  bytes
+			strncpy(&buf[count], &readbuf[start], nbytes);						//copy specified number of  bytes
 			count += nbytes;													//increment count by number of bytes read
+			nbytes = 0;
 			break;
 		}
 
 		else																	//else copy remaining number of bytes in block
 		{
-			strncpy(&buf[count], readbuf, remain);
+			strncpy(&buf[count], &readbuf[start], remain);
 
 			lblk++;																//update trackers
 			start = 0;
 			avail -= remain;													//must update available bytes and count before
 			count += remain;													//	updating remaining bytes
+			nbytes -= remain;
 			remain = BLKSIZE;
 		}
 	}
@@ -97,15 +99,9 @@ int read_file(int fd, char buf[], int nbytes)
 //return: number of bytes read or fail
 int local_read(int fd, int nbytes)
 {
-	char buf[BLKSIZE];
+	char buf[BLKSIZE + 1];
 	int n;
 	int count = 0;
-
-	if(fd < 0 || fd > NFD - 1)				//if file descriptor not within range display error and return fail
-	{
-		printf("ERROR: File descriptor is not within available range\n");
-		return -1;
-	}
 
 	for(int i = 0; i < 66; i++)				//display border
 			printf("*");
@@ -115,12 +111,8 @@ int local_read(int fd, int nbytes)
 		read_file(fd, buf, nbytes) :
 		read_file(fd, buf, 1024))
 	{
-		if(n < 1024)						//mark end of buffer with null character
-			buf[n] = 0;
-			
-		for(int i = 0; i < n; i++)			//print until null or end of buffer
-			putchar(buf[i]);
-
+		buf[n] = 0;							//null terminate buffer
+		printf("%s", buf);
 		nbytes -= n;						//decrement number of bytes to be read by n
 		count += n;							//increment number of bytes read by n
 	}
@@ -149,8 +141,11 @@ int local_cat(char *path)
 	if(fd < 0)								//if open failed then return fail
 		return -1;
 
-	if(running->fd[fd]->refCount > 1)
+	/*if(running->fd[fd]->refCount > 1)		//if file is already open remember offset and set to 0
+	{
 		offset = running->fd[fd]->offset;
+		running->fd[fd]->offset = 0;
+	}*/
 
 	for(int i = 0; i < 66; i++)				//display border
 			printf("*");
@@ -158,12 +153,8 @@ int local_cat(char *path)
 
 	while(n = read_file(fd, buf, 1024))		//execute while number of bytes read is above 0
 	{
-		if(n < 1024)						//mark end of buffer with null character
-			buf[n] = 0;
-
-		for(int i = 0; i < n; i++)			//print until null or end of buffer
-			putchar(buf[i]);
-
+		buf[n] = 0;							//null terminate buffer
+		printf("%s", buf);
 		count += n;							//increment number of bytes read by n
 	}
 
@@ -174,8 +165,8 @@ int local_cat(char *path)
 
 	printf("CAT: read %d char from %s\n", count, path);
 
-	if(running->fd[fd]->refCount > 1)
-		running->fd[fd]->offset = offset;
+	/*if(running->fd[fd]->refCount > 1)		//if file was already open then set offset back
+		running->fd[fd]->offset = offset;*/
 
 	local_close(fd);						//close file descriptor
 

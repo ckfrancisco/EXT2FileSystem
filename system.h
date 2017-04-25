@@ -61,7 +61,7 @@ int iblock;				//beginning inode block number
 int inodes_per_block;	//inodes per block
 						//NOTE: Calculated in super_block()
 
-char *device = "diskimage";	//default device name to read/write
+char *device = "cf";	//default device name to read/write
 
 int icmd;						//index of command in command name array
 char *cmds[] = {				//array of command names

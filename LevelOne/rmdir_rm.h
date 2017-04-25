@@ -10,33 +10,31 @@ int local_rmdir(char *path)
 
 	int ino = getino(&dev, path);							//determine inode number of path
 	if(ino < 0)												//if inode number not found return fail
-	{
 		return -1;
-	}
 
-	char rmdirectory[MAXNAME];
-	char rmbase[MAXNAME];
-	det_dirname(path, rmdirectory);
-	det_basename(path, rmbase);
+	char directory[MAXNAME];
+	char base[MAXNAME];
+	det_dirname(path, directory);
+	det_basename(path, base);
 
 	MINODE *mip = iget(dev, ino);							//create minode
 	if(!S_ISDIR(mip->inode.i_mode))							//if minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a directory\n", rmbase);
+		printf("ERROR: %s is not a directory\n", base);
 		iput(mip);
 		return -1;
 	}
 
 	if(mip->refCount > 2)									//if minode is still being referenced display error and return fail
 	{
-		printf("ERROR: %s is still being used\n", rmbase);
+		printf("ERROR: %s is still being used\n", base);
 		iput(mip);
 		return -1;
 	}
 
 	if(mip->inode.i_links_count > 2)						//if minode contains other directories display error and return fail
 	{
-		printf("ERROR: %s still contains directories\n", rmbase);
+		printf("ERROR: %s still contains directories\n", base);
 		iput(mip);
 		return -1;
 	}
@@ -52,7 +50,7 @@ int local_rmdir(char *path)
 
 		if(prev_len + dp->rec_len < BLKSIZE)				//if minode contains files display error and return fail
 		{
-			printf("ERROR: %s still contains files\n", rmbase);
+			printf("ERROR: %s still contains files\n", base);
 			iput(mip);
 			return -1;
 		}
@@ -70,7 +68,7 @@ int local_rmdir(char *path)
 	MINODE *pmip = iget_parent(mip);						//determine parent minode
 	iput(mip);
 
-	rm_child(pmip, rmbase);									//remove name from parent minode directory
+	rm_child(pmip, base);									//remove name from parent minode directory
 	pmip->inode.i_links_count--;							//update paren minode
 	pmip->dirty = 1;
 	pmip->inode.i_atime = pmip->inode.i_mtime = time(0L);
@@ -91,19 +89,17 @@ int local_rm(char *path)
 
 	int ino = getino(&dev, path);									//determine inode number of path
 	if(ino < 0)														//if inode number not found return fail
-	{
 		return -1;
-	}
 
-	char rmdirectory[MAXNAME];
-	char rmbase[MAXNAME];
-	det_dirname(path, rmdirectory);
-	det_basename(path, rmbase);
+	char directory[MAXNAME];
+	char base[MAXNAME];
+	det_dirname(path, directory);
+	det_basename(path, base);
 
 	MINODE *mip = iget(dev, ino);									//create minode
 	if(!S_ISREG(mip->inode.i_mode) && !S_ISLNK(mip->inode.i_mode))	//if minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a file\n", rmbase);
+		printf("ERROR: %s is not a file\n", base);
 		iput(mip);
 		return -1;
 	}
@@ -117,7 +113,7 @@ int local_rm(char *path)
 		idealloc(mip->dev, mip->ino);
 	}
 
-	int pino = getino(&dev, rmdirectory);							//determine parent inode of file
+	int pino = getino(&dev, directory);								//determine parent inode of file
 	if(pino < 0)													//if parent inode not found display error and return fail
 	{
 		iput(mip);
@@ -127,7 +123,7 @@ int local_rm(char *path)
 	MINODE *pmip = iget(dev, pino);									//get parent minode of file
 	if(!S_ISDIR(pmip->inode.i_mode))								//if parent minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a directory\n", rmdirectory);
+		printf("ERROR: %s is not a directory\n", directory);
 		iput(mip);
 		iput(pmip);
 		return -1;
@@ -135,7 +131,7 @@ int local_rm(char *path)
 
 	iput(mip);
 
-	rm_child(pmip, rmbase);											//remove name from parent minode directory
+	rm_child(pmip, base);											//remove name from parent minode directory
 	pmip->inode.i_links_count--;									//update paren minode
 	pmip->dirty = 1;
 	pmip->inode.i_atime = pmip->inode.i_mtime = time(0L);

@@ -8,14 +8,12 @@ int local_open(char* path, int mode)
 	else
 		dev = running->cwd->dev;
 
-	int ino = getino(&dev, path);					//determine inode of link
-	if(ino < 0)										//if link not found display error and return fail
-	{
-		return -1;
-	}
+	int ino = getino(&dev, path);					//determine inode of file
+	if(ino < 0)										//if file not found display error and return fail
+		return ino;
 
-	MINODE *mip = iget(dev, ino);					//get minode of link
-	if(!S_ISREG(mip->inode.i_mode))					//if minode is not a file or link display error and return fail
+	MINODE *mip = iget(dev, ino);					//get minode of file
+	if(!S_ISREG(mip->inode.i_mode))					//if minode is not a file display error and return fail
 	{
 		printf("ERROR: %s is not a file\n", path);
 		iput(mip);
@@ -33,17 +31,16 @@ int local_open(char* path, int mode)
 	{
 		if(running->fd[i] && running->fd[i]->mptr== mip)
 		{
-			if(running->fd[i]->mode == 0)			//if file is open for read then change mode
-			{
-				running->fd[i]->mode = mode;
-				running->fd[i]->refCount++;			//increment reference count and return index
-				return i;
-			}
-			else									//else display error and return fail
-			{
+			//if(running->fd[i]->mode == 0)			//if file is open for read then change mode
+			//{
+				//running->fd[i]->mode = mode;
+				//return i;
+			//}
+			//else									//else display error and return fail
+			//{
 				printf("ERROR: %s is already open in another mode\n", path);
 				return -1;
-			}
+			//}
 		}
 	}
 
@@ -146,7 +143,7 @@ int local_lseek(int i, int pos)
 	}
 
 	MINODE *mip = running->fd[i]->mptr;
-	if(pos < 0 || pos > mip->inode.i_size - 1)	//if offset not within range display error and return fail
+	if(pos < 0 || pos > mip->inode.i_size)		//if offset not within range display error and return fail
 	{
 		printf("ERROR: Position is not within available range\n");
 		return -1;

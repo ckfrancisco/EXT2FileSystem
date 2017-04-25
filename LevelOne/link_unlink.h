@@ -5,9 +5,7 @@ int local_link(char *oldpath, char *newpath)
 {
 	int oino = getino(&dev, oldpath);									//determine inode of old file
 	if(oino < 0)														//if file not found display error and return fail
-	{
 		return -1;
-	}
 
 	MINODE *omip = iget(dev, oino);										//get minode of old file
 	if(!S_ISREG(omip->inode.i_mode) && !S_ISLNK(omip->inode.i_mode))	//if minode is not a file or link display error and return fail
@@ -17,12 +15,12 @@ int local_link(char *oldpath, char *newpath)
 		return -1;
 	}
 
-	char lkdirectory[MAXPATH];											//parse new path
-	char lkbase[MAXPATH];
-	det_dirname(newpath, lkdirectory);
-	det_basename(newpath, lkbase);
+	char directory[MAXPATH];											//parse new path
+	char base[MAXPATH];
+	det_dirname(newpath, directory);
+	det_basename(newpath, base);
 
-	int pino = getino(&dev, lkdirectory);								//determine parent inode of new file
+	int pino = getino(&dev, directory);									//determine parent inode of new file
 	if(pino < 0)														//if parent inode not found display error and return fail
 	{
 		iput(omip);
@@ -32,21 +30,21 @@ int local_link(char *oldpath, char *newpath)
 	MINODE *pmip = iget(dev, pino);										//get parent minode of new file
 	if(!S_ISDIR(pmip->inode.i_mode))									//if parent minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a directory\n", lkdirectory);
+		printf("ERROR: %s is not a directory\n", directory);
 		iput(omip);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, lkbase) > 0)										//if name of new file already exists display error and return fail
+	if(search(pmip, base) > 0)											//if name of new file already exists display error and return fail
 	{
-		printf("ERROR: %s already exists\n", lkbase);
+		printf("ERROR: %s already exists\n", base);
 		iput(omip);
 		iput(pmip);
 		return -1;
 	}
 
-	int result =  enter_name(pmip, oino, lkbase);						//enter name of new file into parent directory
+	int result =  enter_name(pmip, oino, base);							//enter name of new file into parent directory
 
 	if(result > 0)														//if name entry is successful increment link count
 		omip->inode.i_links_count++;
@@ -66,9 +64,7 @@ int local_unlink(char *path)
 {
 	int ino = getino(&dev, path);									//determine inode of link
 	if(ino < 0)														//if link not found display error and return fail
-	{
 		return -1;
-	}
 
 	MINODE *mip = iget(dev, ino);									//get minode of link
 	if(!S_ISREG(mip->inode.i_mode) && !S_ISLNK(mip->inode.i_mode))	//if minode is not a file or link display error and return fail
@@ -87,15 +83,15 @@ int local_unlink(char *path)
 		idealloc(mip->dev, mip->ino);
 	}
 
-	char lkdirectory[MAXPATH];										//parse path
-	char lkbase[MAXPATH];
-	det_dirname(path, lkdirectory);
-	det_basename(path, lkbase);
+	char directory[MAXPATH];										//parse path
+	char base[MAXPATH];
+	det_dirname(path, directory);
+	det_basename(path, base);
 
-	int pino = getino(&dev, lkdirectory);							//determine parent inode of link
+	int pino = getino(&dev, directory);								//determine parent inode of link
 	MINODE *pmip = iget(dev, pino);									//determine parent minode of link
 
-	int result =  rm_child(pmip, lkbase);							//remove link from parent directory
+	int result =  rm_child(pmip, base);								//remove link from parent directory
 
 	iput(mip);														//put back minode
 	iput(pmip);														//put back parent minode
@@ -110,45 +106,35 @@ int local_symlink(char *oldpath, char *newpath)
 {
 	int oino = getino(&dev, oldpath);									//determine inode of old file
 	if(oino < 0)														//if old file not found display error and return fail
-	{
 		return -1;
-	}
 
-	//MINODE *omip = iget(dev, oino);									//get minode of old file
+	char directory[MAXPATH];											//parse new path
+	char base[MAXPATH];
+	det_dirname(newpath, directory);
+	det_basename(newpath, base);
 
-	char lkdirectory[MAXPATH];											//parse new path
-	char lkbase[MAXPATH];
-	det_dirname(newpath, lkdirectory);
-	det_basename(newpath, lkbase);
-
-	int pino = getino(&dev, lkdirectory);								//determine parent inode of new file
+	int pino = getino(&dev, directory);									//determine parent inode of new file
 	if(pino < 0)														//if parent inode not found display error and return fail
-	{
-		//iput(omip);
 		return -1;
-	}
 
 	MINODE *pmip = iget(dev, pino);										//get parent minode of soft link
 	if(!S_ISDIR(pmip->inode.i_mode))									//if parent minode is not a directory display error and return fail
 	{
-		printf("ERROR: %s is not a directory\n", lkdirectory);
-		//iput(omip);
+		printf("ERROR: %s is not a directory\n", directory);
 		iput(pmip);
 		return -1;
 	}
 
-	if(search(pmip, lkbase) > 0)										//if name of new file already exists display error and return fail
+	if(search(pmip, base) > 0)											//if name of new file already exists display error and return fail
 	{
-		printf("ERROR: %s already exists\n", lkbase);
-		//iput(omip);
+		printf("ERROR: %s already exists\n", base);
 		iput(pmip);
 		return -1;
 	}
 
-	int ino = local_creat(newpath);									//create new file and record inode of hard link
+	int ino = local_creat(newpath);										//create new file and record inode of hard link
 	if(ino < 0)															//if file not created error was displayed in previous funtion so return fail
 	{
-		//iput(omip);
 		iput(pmip);
 		return -1;
 	}
@@ -174,9 +160,7 @@ int local_readlink(char *path, char *contents)
 {
 	int ino = getino(&dev, path);							//determine inode of soft link
 	if(ino < 0)												//if soft link not found display error and return fail
-	{
 		return -1;
-	}
 
 	MINODE *mip = iget(dev, ino);							//get minode of soft link
 	if(!S_ISLNK(mip->inode.i_mode))							//if minode is not a soft link display error and return fail
@@ -251,4 +235,6 @@ int truncate(MINODE *mip)
 			}
 		}
 	}
+
+	mip->inode.i_size = 0;												//reduce sizw to 0
 }

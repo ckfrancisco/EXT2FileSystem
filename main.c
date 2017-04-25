@@ -254,7 +254,7 @@ int main(int argc, char *argv[ ])
 					int nbytes = -1;
 					sscanf(line, "%s %d %d", cmd, &fd, &nbytes);
 
-					printf("icmd = %d cmd = %s fd = %d, nbytes = %d\n", icmd, cmd, fd, nbytes);
+					printf("icmd = %d cmd = %s fd = %d nbytes = %d\n", icmd, cmd, fd, nbytes);
 
 					local_read(fd, nbytes);
 					break;
@@ -263,6 +263,57 @@ int main(int argc, char *argv[ ])
 				parse_path(line, cmd, pathname, directory, base);
 				local_cat(pathname);
 				break;
+			case WRITE:							//display string to file
+				{
+					int fd = -1;
+					char buf[MAXLINE] = "";
+					sscanf(line, "%s %d %[^\n]c", cmd, &fd, buf);
+
+					printf("icmd = %d cmd = %s fd = %d data = %s\n", icmd, cmd, fd, buf);
+
+					local_write(fd, buf);
+					break;
+				}
+			case CP:							//copy file
+				{
+					char destname[MAXPATH] = "";
+					char destdirectory[MAXPATH] = "";
+					char destbase[MAXPATH] = "";
+					sscanf(line, "%s %s %s", cmd, pathname, destname);
+
+					printf("icmd = %d cmd = %s pathname = %s destname = %s\n", icmd, cmd, pathname, destname);
+
+					det_dirname(pathname, directory);		//parse path into directory and base
+					det_basename(pathname, base);
+					printf("dir = %s base = %s\n", directory, base);
+
+					det_dirname(destname, destdirectory);	//parse link path into directory and base
+					det_basename(destname, destbase);
+					printf("dest dir = %s dest base = %s\n", destdirectory, destbase);
+
+					local_cp(pathname, destname);
+					break;
+				}
+			case MV:							//move file
+				{
+					char destname[MAXPATH] = "";
+					char destdirectory[MAXPATH] = "";
+					char destbase[MAXPATH] = "";
+					sscanf(line, "%s %s %s", cmd, pathname, destname);
+
+					printf("icmd = %d cmd = %s pathname = %s destname = %s\n", icmd, cmd, pathname, destname);
+
+					det_dirname(pathname, directory);		//parse path into directory and base
+					det_basename(pathname, base);
+					printf("dir = %s base = %s\n", directory, base);
+
+					det_dirname(destname, destdirectory);	//parse link path into directory and base
+					det_basename(destname, destbase);
+					printf("dest dir = %s dest base = %s\n", destdirectory, destbase);
+
+					local_mv(pathname, destname);
+					break;
+				}
 			default:
 				printf("What in the god damn hell you talking about?\n");
 				break;
