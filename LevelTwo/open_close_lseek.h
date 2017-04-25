@@ -3,6 +3,12 @@
 //return: success or fail
 int local_open(char* path, int mode)
 {
+	if(!path[0])									//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+	
 	if(path[0] == '/')								//initialize device depending on absolute or relative path
 		dev = root->dev;
 	else

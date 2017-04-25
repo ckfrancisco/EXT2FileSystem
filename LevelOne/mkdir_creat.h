@@ -3,6 +3,12 @@
 //return: inode number or fail
 int local_mkdir(char *path)
 {
+	if(!path[0])								//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+
 	if(path[0] == '/')							//initialize device depending on absolute or relative path
 		dev = root->dev;
 	else
@@ -108,6 +114,12 @@ int mk_dir(MINODE *pmip, char *base)
 //return: inode number or fail
 int local_creat(char *path)
 {
+	if(!path[0])								//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+	
 	if(path[0] == '/')							//initialize device depending on absolute or relative path
 		dev = root->dev;
 	else

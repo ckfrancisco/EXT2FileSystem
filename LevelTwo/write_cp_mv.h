@@ -150,6 +150,12 @@ int local_write(int fd, char buf[])
 //return: success or fail
 int local_cp(char *spath, char *dpath)
 {
+	if(!spath[0] || !dpath[0])						//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+	
 	int fd = local_open(spath, 0);					//open file descriptor for source in read mode
 	if(fd < 0)										//if opening source fails return fail
 		return -1;
@@ -197,6 +203,12 @@ int local_cp(char *spath, char *dpath)
 //return: success or fail
 int local_mv(char *spath, char *dpath)
 {
+	if(!spath[0] || !dpath[0])					//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+
 	int sdev;
 	int ddev;
 

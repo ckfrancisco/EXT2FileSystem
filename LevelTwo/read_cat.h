@@ -132,6 +132,12 @@ int local_read(int fd, int nbytes)
 //return: success or fail
 int local_cat(char *path)
 {
+	if(!path[0])							//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+
 	char buf[BLKSIZE];
 	int n;
 	int count = 0;

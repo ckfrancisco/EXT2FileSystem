@@ -171,6 +171,12 @@ int local_lsdir(char *path)
 //return:
 int local_chdir(char *path)
 {
+	if(!path[0])						//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+
 	int ino;
 
 	if(path[0] == '/')					//initialize device depending on absolute or relative path

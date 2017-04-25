@@ -3,6 +3,12 @@
 //return: success or fail
 int local_link(char *oldpath, char *newpath)
 {
+	if(!oldpath[0] || !newpath[0])										//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+
 	int oino = getino(&dev, oldpath);									//determine inode of old file
 	if(oino < 0)														//if file not found display error and return fail
 		return -1;
@@ -62,6 +68,12 @@ int local_link(char *oldpath, char *newpath)
 //return: success or fail
 int local_unlink(char *path)
 {
+	if(!path[0])													//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+	
 	int ino = getino(&dev, path);									//determine inode of link
 	if(ino < 0)														//if link not found display error and return fail
 		return -1;
@@ -104,6 +116,12 @@ int local_unlink(char *path)
 //return: success or fail
 int local_symlink(char *oldpath, char *newpath)
 {
+	if(!oldpath[0] || !newpath[0])										//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");
+		return -1;
+	}
+	
 	int oino = getino(&dev, oldpath);									//determine inode of old file
 	if(oino < 0)														//if old file not found display error and return fail
 		return -1;
@@ -158,6 +176,12 @@ int local_symlink(char *oldpath, char *newpath)
 //return: success or fail
 int local_readlink(char *path, char *contents)
 {
+	if(!path[0])											//if path is null then display error and return fail
+	{
+		printf("ERROR: path name not specified\n");			//if path is null then display error and return fail
+		return -1;
+	}
+	
 	int ino = getino(&dev, path);							//determine inode of soft link
 	if(ino < 0)												//if soft link not found display error and return fail
 		return -1;
