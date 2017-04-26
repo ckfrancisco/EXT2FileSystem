@@ -62,6 +62,7 @@ int write_file(int fd, char buf[], int nbytes)
 			if(dblk == 0)														//if block is empty then allocate and assign block number
 			{
 				dblk = ((int*)ibuf)[lblk - 12] = balloc(running->fd[fd]->mptr->dev);
+				put_block(running->fd[fd]->mptr->dev, i, ibuf);					//write data block back into memory
 			}
 
 			get_block(running->fd[fd]->mptr->dev, dblk, writebuf);				//read data block in read buffer
@@ -83,6 +84,7 @@ int write_file(int fd, char buf[], int nbytes)
 			if(i == 0)															//if indirect block is empty then allocate and assign block number
 			{
 				i = ((int*)dibuf)[(lblk - 268) / 256] = balloc(running->fd[fd]->mptr->dev);
+				put_block(running->fd[fd]->mptr->dev, di, dibuf);				//write data block back into memory
 			}
 
 			char ibuf[BLKSIZE];
@@ -92,6 +94,7 @@ int write_file(int fd, char buf[], int nbytes)
 			if(dblk == 0)														//if block is empty then allocate and assign block number
 			{
 				dblk = ((int*)ibuf)[(lblk - 268) % 256] = balloc(running->fd[fd]->mptr->dev);
+				put_block(running->fd[fd]->mptr->dev, i, ibuf);					//write data block back into memory
 			}
 
 			get_block(running->fd[fd]->mptr->dev, dblk, writebuf);				//read data block in read buffer
