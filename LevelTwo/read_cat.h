@@ -143,15 +143,42 @@ int local_cat(char *path)
 	int count = 0;
 	int offset = 0;
 
-	int fd = local_open(path, 0);			//open file descriptor to file
-	if(fd < 0)								//if open failed then return fail
+	int fd;
+
+	if(path[0] == '/')						//initialize device depending on absolute or relative path
+		dev = root->dev;
+	else
+		dev = running->cwd->dev;
+
+	int ino = getino(&dev, path);			//determine inode number of path
+	if(ino < 0)								//if inode number not found return fail
 		return -1;
 
-	/*if(running->fd[fd]->refCount > 1)		//if file is already open remember offset and set to 0
+	MINODE *mip = iget(dev, ino);			//create minode
+	
+	for(fd = 0; fd < NFD; fd++)				//check if file is already open
+		if(running->fd[fd] && mip == running->fd[fd]->mptr)
+			break;
+
+	iput(mip);
+
+	if(fd < NFD)							//if file is open simply increment reference count
+		running->fd[fd]->refCount++;
+
+	else									//else open the file for read
+	{
+		fd = local_open(path, 0);			//open file descriptor to file
+		if(fd < 0)							//if open failed then return fail
+			return -1;
+	}
+
+	
+
+	if(running->fd[fd]->refCount > 1)		//if file is already open remember offset and set to 0
 	{
 		offset = running->fd[fd]->offset;
 		running->fd[fd]->offset = 0;
-	}*/
+	}
 
 	for(int i = 0; i < 66; i++)				//display border
 			printf("*");
@@ -171,8 +198,8 @@ int local_cat(char *path)
 
 	printf("CAT: read %d char from %s\n", count, path);
 
-	/*if(running->fd[fd]->refCount > 1)		//if file was already open then set offset back
-		running->fd[fd]->offset = offset;*/
+	if(running->fd[fd]->refCount > 1)		//if file was already open then set offset back
+		running->fd[fd]->offset = offset;
 
 	local_close(fd);						//close file descriptor
 

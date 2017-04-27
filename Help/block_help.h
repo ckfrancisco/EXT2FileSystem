@@ -41,7 +41,7 @@ MINODE *iget(int dev, int ino)
 			mip->refCount = 1;
 			mip->dev = dev;
 			mip->ino = ino;
-			mip->dirty = mip->mounted = mip->mptr = 0;
+			mip->dirty = mip->mounted = mip->mntptr = 0;
 
 			int blk  = (ino-1)/8 + iblock;			//calculate block and offset values
 			int disp = (ino-1) % 8;					//NOTE: a set of inodes are stored in a blk

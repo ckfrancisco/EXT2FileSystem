@@ -10,6 +10,7 @@
 #include "Help/help.h"
 #include "LevelOne/level_one.h"
 #include "LevelTwo/level_two.h"
+#include "LevelThree/level_three.h"
 
 //description: initialize global variables
 //parameter:
@@ -32,6 +33,14 @@ int mount_root()
 {
 	printf("MOUNTING ROOT...\n");
 	root = iget(dev, 2);
+	root->mounted = 1;
+	
+	mntable[0] = (MNTABLE*)malloc(sizeof(MNTABLE));
+	mntable[0]->dev = dev;
+	strcpy(mntable[0]->name, device);
+	mntable[0]->mntptr = root;
+	
+	root->mntptr = root;
 }
 
 //description: initialize proccess and cwd
@@ -89,15 +98,15 @@ int main(int argc, char *argv[ ])
 
 
 
-	if (argc > 1)							//if device name supplied overwrite default
+	if (argc > 1)								//if device name supplied overwrite default
 		device = argv[1];
 
-	if ((dev = open(device, O_RDWR)) < 0){	//if device fails to open display error and exit
+	if ((dev = open(device, O_RDWR)) < 0){		//if device fails to open display error and exit
 		printf("ERROR: failed to open %s\n", device);
 		exit(1);
 	}
 
-	printf("CHECKING EXT2 FS...\n");		//read device and initialize globals
+	printf("CHECKING EXT2 FS...\n");			//read device and initialize globals
 	super_block();
 	group_descriptor();
 	init_global();
@@ -106,17 +115,17 @@ int main(int argc, char *argv[ ])
 
 	while(1){
 
-		for(int i = 0; i < 66; i++)			//display border
+		for(int i = 0; i < 66; i++)				//display border
 			printf("=");
 		printf("\n\n\ncf: ");
 
-		fgets(line, 128, stdin);			//read line
+		fgets(line, 128, stdin);				//read line
 		line[strlen(line)] = 0;
 
-		printf("line = %s", line);			//display line and parse values
+		printf("line = %s", line);				//display line and parse values
 		sscanf(line, "%s", cmd);
 
-		icmd = find_cmd(cmd);				//determine index of command
+		icmd = find_cmd(cmd);					//determine index of command
 
 		switch(icmd)
 		{
@@ -330,6 +339,36 @@ int main(int argc, char *argv[ ])
 					printf("dest dir = %s dest base = %s\n", destdirectory, destbase);
 
 					local_mv(pathname, destname);
+					break;
+				}
+			case MOUNT:										//mount file system to path
+				{
+					char destname[MAXPATH] = "";
+					char destdirectory[MAXPATH] = "";
+					char destbase[MAXPATH] = "";
+					sscanf(line, "%s %s %s", cmd, pathname, destname);
+
+					printf("icmd = %d cmd = %s pathname = %s destname = %s\n", icmd, cmd, pathname, destname);
+
+					det_dirname(pathname, directory);		//parse path into directory and base
+					det_basename(pathname, base);
+					printf("dir = %s base = %s\n", directory, base);
+
+					det_dirname(destname, destdirectory);	//parse link path into directory and base
+					det_basename(destname, destbase);
+					printf("dest dir = %s dest base = %s\n", destdirectory, destbase);
+
+					local_mv(pathname, destname);
+					break;
+				}
+			case UMOUNT:									//unmount file system
+				{
+					char filesystem[MAXPATH];
+					sscanf(line, "%s %s", cmd, filesystem);
+
+					printf("icmd = %d cmd = %s filesystem = %s\n", icmd, cmd, filesystem);
+
+					local_umount(filesystem);
 					break;
 				}
 			default:

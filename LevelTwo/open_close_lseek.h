@@ -37,16 +37,16 @@ int local_open(char* path, int mode)
 	{
 		if(running->fd[i] && running->fd[i]->mptr== mip)
 		{
-			//if(running->fd[i]->mode == 0)			//if file is open for read then change mode
-			//{
-				//running->fd[i]->mode = mode;
-				//return i;
-			//}
-			//else									//else display error and return fail
-			//{
+			if(running->fd[i]->mode == 0)			//if file is open for read then change mode
+			{
+				running->fd[i]->mode = mode;
+				return i;
+			}
+			else									//else display error and return fail
+			{
 				printf("ERROR: %s is already open in another mode\n", path);
 				return -1;
-			//}
+			}
 		}
 	}
 

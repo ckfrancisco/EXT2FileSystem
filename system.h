@@ -10,6 +10,7 @@
 #define MAXNAME	     128	//max length of a name
 #define NNAME         32	//maximum number of names to a paths
 #define NARGS          1	//maximum number of args follwing path in a command
+#define NMNT           8	//maximum number of mounted devices
 
 typedef unsigned char  u8;
 typedef unsigned short u16;
@@ -20,13 +21,19 @@ typedef struct ext2_group_desc  GD;
 typedef struct ext2_inode       INODE;
 typedef struct ext2_dir_entry_2 DIR;
 
+typedef struct mntable{
+	int dev;
+	char name[MAXPATH];
+	struct minode *mntptr;
+}MNTABLE;
+
 typedef struct minode{
 	INODE inode;
 	int dev, ino;
 	int refCount;
 	int dirty;
 	int mounted;
-	struct mntable *mptr;
+	MNTABLE *mntptr;
 }MINODE;
 
 typedef struct oft{
@@ -48,6 +55,7 @@ MINODE minode[NMINODE];	//array of minodes
 MINODE *root;			//pointer to the root minode
 PROC   proc[NPROC];		//array of process
 PROC   *running;		//pointer to the running process
+MNTABLE *mntable[NMNT];	//array of mounted device file descriptors
 
 SUPER *sp;				//super block pointer
 GD    *gp;				//group descriptor pointer
@@ -89,6 +97,8 @@ char *cmds[] = {				//array of command names
 		"write",
 		"cp",
 		"mv", 					//end of level two
+		"mount", 
+		"umount", 				//end of level three
 		NULL};
 
 enum CMDS{
@@ -115,5 +125,7 @@ enum CMDS{
 	CAT,
 	WRITE,
 	CP,
-	MV 					//end of level two
+	MV, 				//end of level two
+	MOUNT,  
+	UMOUNT 				//end of level three
 };
