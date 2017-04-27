@@ -1,7 +1,7 @@
 //description: mount file system to mount point path
 //parameter: path to mount point and mount
 //return: success or fail
-int local_mount(char *mount_point, char *mount)
+int local_mount(char *mount, char *mount_point)
 {
 	if(!mount_point[0] || !mount[0])
 	{
@@ -28,6 +28,13 @@ int local_mount(char *mount_point, char *mount)
 		return -1;
 
 	MINODE *mip = iget(dev, ino);
+	if(!S_ISDIR(mip->inode.i_mode))					//if parent minode is not a directory display error and  return fail
+	{
+		printf("ERROR: %s is not a directory\n", mount_point);
+		iput(mip);
+		return -1;
+	}
+
 	if(mip->mounted)
 	{
 		printf("ERROR: %s is already mounted on\n", mount_point);
@@ -36,7 +43,7 @@ int local_mount(char *mount_point, char *mount)
 	}
 
 	int mdev;
-	if ((mdev = open(device, O_RDWR)) < 0){		//if device fails to open display error and exit
+	if ((mdev = open(mount, O_RDWR)) < 0){		//if device fails to open display error and exit
 		printf("ERROR: failed to open %s\n", mount);
 		iput(mip);
 		return(1);
@@ -55,8 +62,8 @@ int local_mount(char *mount_point, char *mount)
 		return(1);
 	}
 
-	int mino = iget(mdev, 2);
-	if(ino < 0)
+	MINODE *mmip = iget(mdev, 2);
+	if(!mmip)
 	{
 		iput(mip);
 		close(mdev);
@@ -69,10 +76,11 @@ int local_mount(char *mount_point, char *mount)
 
 	if (msp->s_magic != 0xEF53){		//if the file system is not ext2 display error and exit
 	  printf("ERROR: Device is not an EXT2 file system\n");
-	  exit(1);
+		iput(mip);
+		iput(mmip);
+		close(mdev);
+	  return -1;
 	}
-
-	MINODE *mmip = iget(mdev, mino);
 
 	mntable[i] = (MNTABLE*)malloc(sizeof(MNTABLE));
 	mntable[i]->dev = mdev;
@@ -81,8 +89,6 @@ int local_mount(char *mount_point, char *mount)
 
 	mip->mounted = mmip->mounted = 1;
 	mip->mntptr = mmip->mntptr = mntable[i];
-	
-	iput(mip);
 
 	return 1;
 }
@@ -124,6 +130,7 @@ int local_umount(char *filesystem)
 	mip->mntptr = 0;
 	mip->mounted = 0;
 
+	iput(mip);
 	free(mntable[i]);
 	mntable[i] = 0;
 

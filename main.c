@@ -40,7 +40,7 @@ int mount_root()
 	strcpy(mntable[0]->name, device);
 	mntable[0]->pmip = root;
 	
-	root->mntptr = root;
+	root->mntptr = mntable[0];
 }
 
 //description: initialize proccess and cwd
@@ -50,7 +50,7 @@ int init_proc()
 {
 	printf("INITIALIZING PROCESSES...\n");
 	running = &proc[0];
-	running->cwd = &minode[0];
+	running->cwd = iget(dev, 2);
 }
 
 //description: determine index of command
@@ -343,22 +343,22 @@ int main(int argc, char *argv[ ])
 				}
 			case MOUNT:										//mount file system to path
 				{
-					char destname[MAXPATH] = "";
-					char destdirectory[MAXPATH] = "";
-					char destbase[MAXPATH] = "";
-					sscanf(line, "%s %s %s", cmd, pathname, destname);
+					char filesystem[MAXPATH] = "";
+					char fsdirectory[MAXPATH] = "";
+					char fsbase[MAXPATH] = "";
+					sscanf(line, "%s %s %s", cmd, filesystem, pathname);
 
-					printf("icmd = %d cmd = %s pathname = %s destname = %s\n", icmd, cmd, pathname, destname);
+					printf("icmd = %d cmd = %s filesystem = %s pathname = %s \n", icmd, cmd, filesystem, pathname);
+
+					det_dirname(filesystem, fsdirectory);	//parse link path into directory and base
+					det_basename(filesystem, fsbase);
+					printf("fs dir = %s fs base = %s\n", fsdirectory, fsbase);
 
 					det_dirname(pathname, directory);		//parse path into directory and base
 					det_basename(pathname, base);
 					printf("dir = %s base = %s\n", directory, base);
 
-					det_dirname(destname, destdirectory);	//parse link path into directory and base
-					det_basename(destname, destbase);
-					printf("dest dir = %s dest base = %s\n", destdirectory, destbase);
-
-					local_mv(pathname, destname);
+					local_mount(filesystem, pathname);
 					break;
 				}
 			case UMOUNT:									//unmount file system

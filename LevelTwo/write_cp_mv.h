@@ -172,7 +172,7 @@ int local_cp(char *spath, char *dpath)
 		else
 			dev = running->cwd->dev;
 
-		int dino = getino(dev, dpath);
+		int dino = getino(&dev, dpath);
 		if(dino >= 0)								//if destination exists then opening didn't fail because
 		{											//	destination didn't exist so close fd and return fail
 			close(fd);
@@ -224,6 +224,22 @@ int local_mv(char *spath, char *dpath)
 		ddev = root->dev;
 	else
 		ddev = running->cwd->dev;
+
+	char ddirectory[MAXPATH] = "";
+	det_dirname(dpath, ddirectory);
+
+	int sino = getino(&sdev, spath);			//determine device of paths
+	int dino = getino(&ddev, ddirectory);
+
+	MINODE *smip = iget(sdev, sino);
+	MINODE *dmip = iget(ddev, dino);
+
+	sdev = smip->dev;
+	ddev = dmip->dev;
+
+	iput(smip);
+	iput(dmip);
+
 
 	if(sdev == ddev)
 	{

@@ -33,7 +33,7 @@ int ls_file(MINODE *mip, char *name)
 
 	printf(" %7d", mip->inode.i_size);
 
-	printf(" %s", name);							//use name to print name of minode
+	printf(" %s", name);						//use name to print name of minode
 
 	if(S_ISLNK(mip->inode.i_mode))				//if minode is a link display contents
 		printf(" -> %s\n", (char*)mip->inode.i_block);
@@ -77,29 +77,29 @@ int local_ls(char *path)
 
 	if(S_ISDIR(mip->inode.i_mode))		//if minode is a directory ls all files within
 	{
-		for(int dblk = 0; dblk < 12; dblk++)				//execute across all direct blocks within inode's inode table
+		for(int dblk = 0; dblk < 12; dblk++)					//execute across all direct blocks within inode's inode table
 		{
-			if(!(mip->inode.i_block[dblk]))					//if empty block found break
+			if(!(mip->inode.i_block[dblk]))						//if empty block found break
 				break;
 
 			
 			char buf[BLKSIZE];
-			get_block(dev, mip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
-			DIR *dp = (DIR*)buf;							//cast buffer as directory pointer
+			get_block(mip->dev, mip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
+			DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
 
 			printf("Data Block = %d\n", mip->inode.i_block[dblk]);
 
-			while(dp < &buf[BLKSIZE])						//execute while there is another directory struct ahead
+			while(dp < &buf[BLKSIZE])							//execute while there is another directory struct ahead
 			{
 				MINODE *dmip = iget(mip->dev, dp->inode);
 
 				char name[MAXNAME];
-				strncpy(name, dp->name, dp->name_len);		//copy directory name into string buffer
+				strncpy(name, dp->name, dp->name_len);			//copy directory name into string buffer
 				name[dp->name_len] = 0;
 
-				ls_file(dmip, name);						//ls minode
+				ls_file(dmip, name);							//ls minode
 
-				dp = (char*)dp + dp->rec_len;				//point to next directory struct within buffer
+				dp = (char*)dp + dp->rec_len;					//point to next directory struct within buffer
 
 				iput(dmip);
 			}
@@ -137,25 +137,25 @@ int local_stat(char *path)
 	if(S_ISREG(mip->inode.i_mode))
 	{
 		char directory[MAXPATH];
-		det_dirname(path, directory);							//parse path directory
-		int pino = getino(&dev, directory);						//determine parent inode
-		MINODE *pmip = iget(dev, pino);							//get parent minode
+		det_dirname(path, directory);								//parse path directory
+		int pino = getino(&dev, directory);							//determine parent inode
+		MINODE *pmip = iget(dev, pino);								//get parent minode
 
 		printf("%3s %7s %8s %s", "ino", "rec_len", "name_len", "name\n");
 
-		for(int dblk = 0; dblk < 12; dblk++)					//execute across all direct blocks within inode's inode table
+		for(int dblk = 0; dblk < 12; dblk++)						//execute across all direct blocks within inode's inode table
 		{
-			if(!(pmip->inode.i_block[dblk]))					//if empty block found break
+			if(!(pmip->inode.i_block[dblk]))						//if empty block found break
 				break;
 
 			char buf[BLKSIZE];
-			get_block(dev, pmip->inode.i_block[dblk], buf);		//read a directory block from the inode table into buffer
-			DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
+			get_block(pmip->dev, pmip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
+			DIR *dp = (DIR*)buf;									//cast buffer as directory pointer
 
-			while((char*)dp < &buf[BLKSIZE])					//execute while there is another directory struct ahead
+			while((char*)dp < &buf[BLKSIZE])						//execute while there is another directory struct ahead
 			{
 				char name[MAXNAME];
-				strncpy(name, dp->name, dp->name_len);			//copy directory name into string buffer
+				strncpy(name, dp->name, dp->name_len);				//copy directory name into string buffer
 				name[dp->name_len] = 0;
 
 				if(mip->ino == dp->inode)
@@ -164,7 +164,7 @@ int local_stat(char *path)
 					break;
 				}
 
-				dp = (char*)dp + dp->rec_len;					//point to next directory struct within buffer
+				dp = (char*)dp + dp->rec_len;						//point to next directory struct within buffer
 			}
 		}
 
@@ -181,7 +181,7 @@ int local_stat(char *path)
 				break;
 
 			char buf[BLKSIZE];
-			get_block(dev, mip->inode.i_block[dblk], buf);		//read a directory block from the inode table into buffer
+			get_block(mip->dev, mip->inode.i_block[dblk], buf);	//read a directory block from the inode table into buffer
 			DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
 
 			while((char*)dp < &buf[BLKSIZE])					//execute while there is another directory struct ahead
@@ -243,19 +243,24 @@ int local_chdir(char *path)
 //return:
 int rpwd(MINODE *mip)
 {
-	if(mip->mntptr == mip)				//if minode is the root then return
+	if(mip->mounted && mip->mntptr->pmip == mip)		//if minode is the root then return
 		return;
 
-	MINODE *pmip = iget_parent(mip);	//determine parent of minode
+	MINODE *pmip = iget_parent(mip);					//determine parent of minode
 
-	rpwd(pmip);							//print the name of the parent minode
+	rpwd(pmip);											//print the name of the parent minode
 
 	char name[MAXNAME];
-	get_name(pmip, mip->ino, name);		//determine name of minode
 
-	iput(pmip);							//put parent minode back
+	if(mip->mounted)
+		get_name(pmip, mip->mntptr->pmip->ino, name);	//determine name of minode
 
-	printf("/%s", name);				//print the name of minode
+	else
+		get_name(pmip, mip->ino, name);					//determine name of minode
+
+	iput(pmip);											//put parent minode back
+
+	printf("/%s", name);								//print the name of minode
 }
 
 //description: print root or path name to root recursively from minode
@@ -265,13 +270,13 @@ int local_pwd(MINODE *mip)
 {
 	printf("cwd = ");
 
-	if(mip->mntptr == mip)	//if minode is the root then print '/' and return
+	if(mip->mntptr && mip->mntptr->pmip == mip)	//if minode is the root then print '/' and return
 	{
 		printf("/\n");
 		return;
 	}
 
-	rpwd(mip);				//else recursively print path to minode
+	rpwd(mip);									//else recursively print path to minode
 
 	printf("\n");
 }

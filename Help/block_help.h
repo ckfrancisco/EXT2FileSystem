@@ -141,7 +141,18 @@ int getino(int *dev, char *path)
 		{
 			if(mip == mip->mntptr->pmip)
 			{
+				*dev = mip->mntptr->dev;
+				iput(mip);
 				
+				mip = iget(*dev, 2);
+			}
+
+			if(!strcmp(names[i], ".."))
+			{
+				*dev = mip->mntptr->pmip->dev;
+				iput(mip);
+				
+				mip = iget(mip->mntptr->pmip->dev, mip->mntptr->pmip->ino);
 			}
 		}
 
@@ -156,6 +167,17 @@ int getino(int *dev, char *path)
 		iput(mip);											//put back current minode and get the next minode
 		mip = iget(*dev, ino);
 	}
+
+	if(mip->mounted)
+		{
+			if(mip == mip->mntptr->pmip)
+			{
+				*dev = mip->mntptr->dev;
+				iput(mip);
+				
+				mip = iget(*dev, 2);
+			}
+		}
 
 	ino = mip->ino;											//record inode number and put minode back
 	iput(mip);
@@ -203,6 +225,17 @@ int get_name(MINODE *pmip, int ino, char *name)
 //return: parent minode
 MINODE *iget_parent(MINODE *mip)
 {
+	if(mip->mounted)
+	{
+		if(mip != mip->mntptr->pmip)
+		{
+			MINODE *pmip = iget(mip->mntptr->pmip->dev, mip->mntptr->pmip->ino);
+			pmip = iget_parent(pmip);
+			return pmip;
+		}
+	}
+
+
 	char buf[BLKSIZE];
 	get_block(mip->dev, mip->inode.i_block[0], buf);	//read a directory block from the inode table into buffer
 
