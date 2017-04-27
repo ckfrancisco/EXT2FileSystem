@@ -227,10 +227,10 @@ MINODE *iget_parent(MINODE *mip)
 {
 	if(mip->mounted)
 	{
-		if(mip != mip->mntptr->pmip)
+		if(mip != mip->mntptr->pmip)					//if mounted minode is the root of a mounted fs
 		{
 			MINODE *pmip = iget(mip->mntptr->pmip->dev, mip->mntptr->pmip->ino);
-			pmip = iget_parent(pmip);
+			pmip = iget_parent(pmip);					//return the parent minode of the mount point
 			return pmip;
 		}
 	}

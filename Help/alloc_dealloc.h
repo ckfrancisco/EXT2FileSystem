@@ -156,7 +156,7 @@ int idealloc(int dev, int ino)
 
 	get_block(dev, imap, buf);		//read imap into buffer
 
-	clr_bit(buf,ino);				//clear ino bit
+	clr_bit(buf,ino - 1);				//clear ino bit
 	inc_free_inodes(dev);			//increment amount of free inode
 
 	put_block(dev, imap, buf);		//write back to device

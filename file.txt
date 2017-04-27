@@ -1,0 +1,6 @@
+creat a
+open a 1
+write 0 HELLO PROFESSOR WANG, IT'S A PLEASURE TO MEET YOU!
+close 0
+cat a
+quit

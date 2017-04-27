@@ -1,6 +1,0 @@
-creat a
-open a 1
-write 0 HELLO JULIA I AM CHRISTIANS COMPUTER WHAT IS UP!?
-close 0
-cat a
-quit
