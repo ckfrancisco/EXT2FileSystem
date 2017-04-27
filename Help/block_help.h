@@ -137,6 +137,14 @@ int getino(int *dev, char *path)
 
 	for (int i = 0; i < n; i++)								//iterate through path tokens
 	{
+		if(mip->mounted)
+		{
+			if(mip == mip->mntptr->pmip)
+			{
+				
+			}
+		}
+
 		ino = search(mip, names[i]);						//find inode number of name within minode's directories
 		if(ino < 0)											//if name not found display error and return fail
 		{

@@ -232,7 +232,6 @@ int local_chdir(char *path)
 	}
 
 	iput(running->cwd);					//put previous cwd minode back
-	running->cwd->dev = mip->dev;
 	running->cwd = mip;					//assign minode to cwd
 
 	local_pwd(mip);						//print new cwd path
@@ -244,7 +243,7 @@ int local_chdir(char *path)
 //return:
 int rpwd(MINODE *mip)
 {
-	if(mip->ino == 2)					//if minode is the root then return
+	if(mip->mntptr == mip)				//if minode is the root then return
 		return;
 
 	MINODE *pmip = iget_parent(mip);	//determine parent of minode
@@ -266,13 +265,13 @@ int local_pwd(MINODE *mip)
 {
 	printf("cwd = ");
 
-	if(mip->ino == 2)	//if minode is the root then print '/' and return
+	if(mip->mntptr == mip)	//if minode is the root then print '/' and return
 	{
 		printf("/\n");
 		return;
 	}
 
-	rpwd(mip);			//else recursively print path to minode
+	rpwd(mip);				//else recursively print path to minode
 
 	printf("\n");
 }

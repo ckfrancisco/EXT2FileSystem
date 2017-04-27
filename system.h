@@ -24,7 +24,7 @@ typedef struct ext2_dir_entry_2 DIR;
 typedef struct mntable{
 	int dev;
 	char name[MAXPATH];
-	struct minode *mntptr;
+	struct minode *pmip;
 }MNTABLE;
 
 typedef struct minode{

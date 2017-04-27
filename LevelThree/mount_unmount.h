@@ -77,7 +77,7 @@ int local_mount(char *mount_point, char *mount)
 	mntable[i] = (MNTABLE*)malloc(sizeof(MNTABLE));
 	mntable[i]->dev = mdev;
 	strcpy(mntable[i]->name, mount);
-	mntable[i]->mntptr = mip;
+	mntable[i]->pmip = mip;
 
 	mip->mounted = mmip->mounted = 1;
 	mip->mntptr = mmip->mntptr = mntable[i];
@@ -120,7 +120,7 @@ int local_umount(char *filesystem)
 		}
 	}
 
-	MINODE *mip = mntable[i]->mntptr;
+	MINODE *mip = mntable[i]->pmip;
 	mip->mntptr = 0;
 	mip->mounted = 0;
 

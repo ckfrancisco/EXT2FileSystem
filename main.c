@@ -38,7 +38,7 @@ int mount_root()
 	mntable[0] = (MNTABLE*)malloc(sizeof(MNTABLE));
 	mntable[0]->dev = dev;
 	strcpy(mntable[0]->name, device);
-	mntable[0]->mntptr = root;
+	mntable[0]->pmip = root;
 	
 	root->mntptr = root;
 }
