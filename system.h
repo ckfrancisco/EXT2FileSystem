@@ -61,13 +61,13 @@ int iblock;				//beginning inode block number
 int inodes_per_block;	//inodes per block
 						//NOTE: Calculated in super_block()
 
-char *device = "diskimage";	//default device name to read/write
+char *device = "cf";	//default device name to read/write
 
 int icmd;						//index of command in command name array
 char *cmds[] = {				//array of command names
 		"quit",
 		"ls",
-		"lsdir",
+		"stat",
 		"cd",
 		"pwd",
 		"mkdir",
@@ -77,7 +77,9 @@ char *cmds[] = {				//array of command names
 		"link", 
 		"unlink", 
 		"symlink",
-		"readlink", 			//end of level one
+		"readlink",
+		"chmod",
+		"touch",   				//end of level one
 		"open", 
 		"close", 
 		"lseek", 
@@ -92,7 +94,7 @@ char *cmds[] = {				//array of command names
 enum CMDS{
 	QUIT,
 	LS,
-	LSDIR,
+	STAT,
 	CD,
 	PWD,
 	MKDIR,
@@ -102,7 +104,9 @@ enum CMDS{
 	LINK,
 	UNLINK,
 	SYMLINK,
-	READLINK, 			//end of level one
+	READLINK,
+	CHMOD, 
+	TOUCH,  			//end of level one
 	OPEN,
 	CLOSE,
 	LSEEK,

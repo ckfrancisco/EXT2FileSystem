@@ -112,7 +112,7 @@ int local_ls(char *path)
 //description: show directory struct information stored within a directory minode
 //parameter: path
 //return:
-int local_lsdir(char *path)
+int local_stat(char *path)
 {
 	int ino;
 	MINODE *mip;
@@ -134,6 +134,43 @@ int local_lsdir(char *path)
 		mip = running->cwd;
 	}
 
+	if(S_ISREG(mip->inode.i_mode))
+	{
+		char directory[MAXPATH];
+		det_dirname(path, directory);							//parse path directory
+		int pino = getino(&dev, directory);						//determine parent inode
+		MINODE *pmip = iget(dev, pino);							//get parent minode
+
+		printf("%3s %7s %8s %s", "ino", "rec_len", "name_len", "name\n");
+
+		for(int dblk = 0; dblk < 12; dblk++)					//execute across all direct blocks within inode's inode table
+		{
+			if(!(pmip->inode.i_block[dblk]))					//if empty block found break
+				break;
+
+			char buf[BLKSIZE];
+			get_block(dev, pmip->inode.i_block[dblk], buf);		//read a directory block from the inode table into buffer
+			DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
+
+			while((char*)dp < &buf[BLKSIZE])					//execute while there is another directory struct ahead
+			{
+				char name[MAXNAME];
+				strncpy(name, dp->name, dp->name_len);			//copy directory name into string buffer
+				name[dp->name_len] = 0;
+
+				if(mip->ino == dp->inode)
+				{
+					printf("%3d %7d %8d %s\n", dp->inode, dp->rec_len, dp->name_len, name);
+					break;
+				}
+
+				dp = (char*)dp + dp->rec_len;					//point to next directory struct within buffer
+			}
+		}
+
+		iput(pmip);
+	}
+
 	if(S_ISDIR(mip->inode.i_mode))
 	{
 		printf("%3s %7s %8s %s", "ino", "rec_len", "name_len", "name\n");
@@ -146,8 +183,6 @@ int local_lsdir(char *path)
 			char buf[BLKSIZE];
 			get_block(dev, mip->inode.i_block[dblk], buf);		//read a directory block from the inode table into buffer
 			DIR *dp = (DIR*)buf;								//cast buffer as directory pointer
-
-			printf("Data Block = %d\n", mip->inode.i_block[dblk]);
 
 			while((char*)dp < &buf[BLKSIZE])					//execute while there is another directory struct ahead
 			{

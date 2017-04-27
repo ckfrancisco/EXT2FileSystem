@@ -121,45 +121,45 @@ int main(int argc, char *argv[ ])
 		switch(icmd)
 		{
 			case QUIT:							//put back all minodes before quitting
-				printf("Saving...\n");
+				printf("\nSaving...\n");
 				for(int i = 0; i < 66; i++)
 					printf("=");
 				printf("\n\n\n");
 				iput_all();
 				exit(1);
 				break;
-			case LS:							//list contents within directory
+			case LS:										//list contents within directory
 				parse_path(line, cmd, pathname, directory, base);
 				local_ls(pathname);
 				break;
-			case LSDIR:							//list directory struct infomation within directory
+			case STAT:										//list directory struct infomation within directory
 				parse_path(line, cmd, pathname, directory, base);
-				local_lsdir(pathname);
+				local_stat(pathname);
 				break;
-			case CD:							//change directory
+			case CD:										//change directory
 				parse_path(line, cmd, pathname, directory, base);
 				local_chdir(pathname);
 				break;
-			case PWD:							//print working directory
+			case PWD:										//print working directory
 				local_pwd(running->cwd);
 				break;
-			case MKDIR:							//make directory
+			case MKDIR:										//make directory
 				parse_path(line, cmd, pathname, directory, base);
 				local_mkdir(pathname);
 				break;
-			case CREAT:							//create file
+			case CREAT:										//create file
 				parse_path(line, cmd, pathname, directory, base);
 				local_creat(pathname);
 				break;
-			case RMDIR:							//remove directory
+			case RMDIR:										//remove directory
 				parse_path(line, cmd, pathname, directory, base);
 				local_rmdir(pathname);
 				break;
-			case RM:							//remove directory
+			case RM:										//remove directory
 				parse_path(line, cmd, pathname, directory, base);
 				local_rm(pathname);
 				break;
-			case LINK:							//create hard link to file or link
+			case LINK:										//create hard link to file or link
 				{
 					char linkname[MAXPATH] = "";
 					char linkdirectory[MAXPATH] = "";
@@ -179,11 +179,11 @@ int main(int argc, char *argv[ ])
 					local_link(pathname, linkname);
 					break;
 				}
-			case UNLINK:						//remove hard link
+			case UNLINK:									//remove hard link
 				parse_path(line, cmd, pathname, directory, base);
 				local_unlink(pathname);
 				break;
-			case SYMLINK:						//creat soft link to directory or file
+			case SYMLINK:									//creat soft link to directory or file
 				{
 					char linkname[MAXPATH] = "";
 					char linkdirectory[MAXPATH] = "";
@@ -203,14 +203,32 @@ int main(int argc, char *argv[ ])
 					local_symlink(pathname, linkname);
 					break;
 				}
-			case READLINK:						//read contents of soft link
+			case READLINK:									//read contents of soft link
 				{
 					char contents[MAXPATH] = "";
 					parse_path(line, cmd, pathname, directory, base);
 					local_readlink(pathname, contents);
 					break;
 				}
-			case OPEN:							//open file
+			case CHMOD:
+				{
+					int mode = -1;
+					sscanf(line, "%s %d %s", cmd, &mode, pathname);
+
+					printf("icmd = %d cmd = %s mode = %d pathname = %s\n", icmd, cmd, mode, pathname);
+
+					det_dirname(pathname, directory);		//parse path into directory and base
+					det_basename(pathname, base);
+					printf("dir = %s base = %s\n", directory, base);
+
+					local_chmod(mode, pathname);
+					break;
+				}
+			case TOUCH:							
+				parse_path(line, cmd, pathname, directory, base);
+				local_touch(pathname);
+				break;
+			case OPEN:										//open file
 				{
 					int mode = -1;
 					sscanf(line, "%s %s %d", cmd, pathname, &mode);
@@ -224,7 +242,7 @@ int main(int argc, char *argv[ ])
 					local_open(pathname, mode);
 					break;
 				}
-			case CLOSE:							//close file
+			case CLOSE:										//close file
 				{
 					int fd = -1;
 					sscanf(line, "%s %d", cmd, &fd);
@@ -234,7 +252,7 @@ int main(int argc, char *argv[ ])
 					local_close(fd);
 					break;
 				}
-			case LSEEK:							//change offset of file
+			case LSEEK:										//change offset of file
 				{
 					int fd = -1;
 					int offset = -1;
@@ -245,10 +263,10 @@ int main(int argc, char *argv[ ])
 					local_lseek(fd, offset);
 					break;
 				}
-			case PFD:							//display all open files
+			case PFD:										//display all open files
 				local_pfd();
 				break;
-			case READ:							//change offset of file
+			case READ:										//change offset of file
 				{
 					int fd = -1;
 					int nbytes = -1;
@@ -259,11 +277,11 @@ int main(int argc, char *argv[ ])
 					local_read(fd, nbytes);
 					break;
 				}
-			case CAT:							//display file to screen
+			case CAT:										//display file to screen
 				parse_path(line, cmd, pathname, directory, base);
 				local_cat(pathname);
 				break;
-			case WRITE:							//display string to file
+			case WRITE:										//display string to file
 				{
 					int fd = -1;
 					char buf[MAXLINE] = "";
@@ -274,7 +292,7 @@ int main(int argc, char *argv[ ])
 					local_write(fd, buf);
 					break;
 				}
-			case CP:							//copy file
+			case CP:										//copy file
 				{
 					char destname[MAXPATH] = "";
 					char destdirectory[MAXPATH] = "";
@@ -294,7 +312,7 @@ int main(int argc, char *argv[ ])
 					local_cp(pathname, destname);
 					break;
 				}
-			case MV:							//move file
+			case MV:										//move file
 				{
 					char destname[MAXPATH] = "";
 					char destdirectory[MAXPATH] = "";

@@ -185,7 +185,7 @@ int rm_child(MINODE *pmip, char *base)
 
 		while((char*)dp + dp->rec_len < &buf[BLKSIZE])									//execute until last directory encountered
 		{
-			if(!strncmp(dp->name, base, dp->rec_len) && dp->name_len == strlen(base))	//remove middle directory in data block
+			if(!strncmp(dp->name, base, dp->name_len) && dp->name_len == strlen(base))	//remove middle directory in data block
 			{
 				int remove_len = dp->rec_len;											//record the rec_len of the directory being removed
 				pdp = dp;																//remember previous directory struct
