@@ -128,11 +128,11 @@ int getino(int *dev, char *path)
 	MINODE *mip;
 
 	if (path[0] == '/')										//if absolute path set current minode to root inode
-		mip = iget(*dev, 2);
+		mip = iget(root->dev, 2);
 	else
 		mip = iget((running->cwd->dev), running->cwd->ino);	//else set current minode to cwd inode
 
-	int n = tokenize(path, names);									//n = number of token strings
+	int n = tokenize(path, names);							//n = number of token strings
 	int ino;
 
 	for (int i = 0; i < n; i++)								//iterate through path tokens

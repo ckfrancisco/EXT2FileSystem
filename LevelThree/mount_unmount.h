@@ -1,11 +1,27 @@
 //description: mount file system to mount point path
 //parameter: path to mount point and mount
 //return: success or fail
+int display_mount()
+{
+	printf("[%6s, %6s] %5s %s\n", "mp dev", "mp ino", "m dev", "file system");
+
+	for(int i = 0; i < NMNT; i++)
+	{
+		if(mntable[i])
+		{
+			printf("[%6d, %6d] %5d %s\n", mntable[i]->pmip->dev, mntable[i]->pmip->ino, mntable[i]->dev, mntable[i]->name);;
+		}
+	}
+}
+
+//description: mount file system to mount point path
+//parameter: path to mount point and mount
+//return: success or fail
 int local_mount(char *mount, char *mount_point)
 {
 	if(!mount_point[0] || !mount[0])
 	{
-		//display_mount();
+		display_mount();
 		return;
 	}
 
@@ -89,6 +105,7 @@ int local_mount(char *mount, char *mount_point)
 
 	mip->mounted = mmip->mounted = 1;
 	mip->mntptr = mmip->mntptr = mntable[i];
+	iput(mmip);
 
 	return 1;
 }
@@ -107,7 +124,7 @@ int local_umount(char *filesystem)
 	int i;
 	for(i = 0; i < NMNT; i++)
 	{
-		if(mntable[i] && !strcmp(mntable[i], filesystem))
+		if(mntable[i] && !strcmp(mntable[i]->name, filesystem))
 			break;
 	}
 
@@ -117,7 +134,7 @@ int local_umount(char *filesystem)
 		return -1;
 	}
 
-	for(int n = 0; i < NMINODE; i++)
+	for(int n = 0; n < NMINODE; n++)
 	{
 		if(minode[n].refCount && minode[n].dev == mntable[i]->dev)
 		{
@@ -134,5 +151,5 @@ int local_umount(char *filesystem)
 	free(mntable[i]);
 	mntable[i] = 0;
 
-	return 1;
+	return 0;
 }
