@@ -372,7 +372,7 @@ int main(int argc, char *argv[ ])
 					break;
 				}
 			default:
-				printf("What in the god damn hell you talking about?\n");
+				printf("invalid command\n");
 				break;
 		}
 
