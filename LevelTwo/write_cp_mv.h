@@ -143,7 +143,7 @@ int local_write(int fd, char buf[])
 
 	count = write_file(fd, buf, nbytes);	//execute while number of bytes read is above 0
 
-	printf("WRITE: read %d char from file descriptor %d\n", count, fd);
+	printf("WRITE: wrote %d char to file descriptor %d\n", count, fd);
 
 	return 1;
 }
