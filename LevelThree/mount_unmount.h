@@ -135,7 +135,7 @@ int local_umount(char *filesystem)
 
 	for(int n = 0; n < NMINODE; n++)				//if device is still in use display error and return fail
 	{
-		if(minode[n].refCount && minode[n].dev == mntable[i]->dev && minode[n].inode != 2)
+		if(minode[n].refCount && minode[n].dev == mntable[i]->dev && minode[n].ino != 2)
 		{
 			printf("ERROR: file system is still in use\n");
 			return -1;
