@@ -105,7 +105,6 @@ int local_mount(char *mount, char *mount_point)
 
 	mip->mounted = mmip->mounted = 1;				//mark minodes as mounted and point to index in mountable
 	mip->mntptr = mmip->mntptr = mntable[i];
-	iput(mmip);
 
 	return 1;
 }
@@ -136,7 +135,7 @@ int local_umount(char *filesystem)
 
 	for(int n = 0; n < NMINODE; n++)				//if device is still in use display error and return fail
 	{
-		if(minode[n].refCount && minode[n].dev == mntable[i]->dev)
+		if(minode[n].refCount && minode[n].dev == mntable[i]->dev && minode[n].inode != 2)
 		{
 			printf("ERROR: file system is still in use\n");
 			return -1;
